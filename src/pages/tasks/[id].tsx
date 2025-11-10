@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import GeneralLayout from '@/layouts/general-layout'
 import { ArrowLeft, Trash2, Calendar, User, AlertCircle, CheckCircle2, Clock, Circle } from 'lucide-react'
@@ -7,6 +7,7 @@ import PrimaryButton from '@/components/buttons/primary-button'
 import { format } from 'date-fns'
 import TodoCard from '@/components/todos/todo-card'
 import AddTodoForm from '@/components/todos/add-todo-form'
+import { calculateTaskProgress, getSuggestedTaskStatus } from '@/utils/task-progress'
 
 export default function TaskDetail() {
   const router = useRouter()
@@ -14,14 +15,44 @@ export default function TaskDetail() {
   const { getTask, updateTask, deleteTask, addTodo, deleteTodo, moveTodo } = useTasks()
   const [isLoading, setIsLoading] = React.useState(true)
 
+  // Get task early
+  const task = id && router.isReady ? getTask(id as string) : undefined
+
+  // Memoize todo counts to avoid recalculating in dependency array
+  const todoStats = useMemo(() => {
+    if (!task || !task.todos) {
+      return { total: 0, completed: 0, inProgress: 0 }
+    }
+    return {
+      total: task.todos.length,
+      completed: task.todos.filter((t) => t.status === 'Complete').length,
+      inProgress: task.todos.filter((t) => t.status === 'In Progress').length,
+    }
+  }, [task?.todos])
+
+  // Calculate progress and suggested status (safe even if task is undefined)
+  const progress = task ? calculateTaskProgress(task) : { percentage: 0, completed: 0, total: 0 }
+  const suggestedStatus = task ? getSuggestedTaskStatus(task) : 'Todo'
+
+  // All hooks must be at the top, before any conditional returns
   React.useEffect(() => {
     if (router.isReady) {
       setIsLoading(false)
     }
   }, [router.isReady])
 
-  const task = id && router.isReady ? getTask(id as string) : undefined
+  // Auto-update task status based on todos progress
+  useEffect(() => {
+    if (task && suggestedStatus !== task.status) {
+      // Only auto-update if todos exist and status should change
+      if (task.todos && task.todos.length > 0) {
+        updateTask(task.id, { status: suggestedStatus })
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task?.id, todoStats.total, todoStats.completed, todoStats.inProgress, suggestedStatus])
 
+  // Now we can do conditional returns after all hooks
   if (isLoading || !router.isReady) {
     return (
       <GeneralLayout>
@@ -150,6 +181,26 @@ export default function TaskDetail() {
               {task.priority} Priority
             </span>
           </div>
+
+          {/* Progress Bar */}
+          {progress.total > 0 && (
+            <div className='mb-6'>
+              <div className='flex items-center justify-between mb-2'>
+                <span className='text-sm font-medium text-gray-700 dark:text-gray-300 font-subheading'>
+                  Progress
+                </span>
+                <span className='text-sm font-medium text-gray-600 dark:text-gray-400 font-paragraph'>
+                  {progress.completed} of {progress.total} todos completed ({progress.percentage}%)
+                </span>
+              </div>
+              <div className='w-full bg-gray-200 dark:bg-zinc-800 rounded-full h-2.5'>
+                <div
+                  className='bg-zim-green-500 h-2.5 rounded-full transition-all duration-300'
+                  style={{ width: `${progress.percentage}%` }}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Description */}
           {task.description && (

@@ -6,6 +6,7 @@ import AddTaskModal from '@/components/modals/add-task-modal'
 import PrimaryButton from '@/components/buttons/primary-button'
 import { useTasks, TaskStatus } from '@/contexts/tasks-context'
 import { format } from 'date-fns'
+import { calculateTaskProgress } from '@/utils/task-progress'
 
 function index() {
   const router = useRouter()
@@ -238,6 +239,29 @@ function index() {
                     {task.priority}
                   </span>
                 </div>
+
+                {/* Progress Bar */}
+                {(() => {
+                  const progress = calculateTaskProgress(task)
+                  return progress.total > 0 ? (
+                    <div className='mb-3'>
+                      <div className='flex items-center justify-between mb-1.5'>
+                        <span className='text-xs font-medium text-gray-600 dark:text-gray-400 font-paragraph'>
+                          Progress
+                        </span>
+                        <span className='text-xs font-medium text-gray-600 dark:text-gray-400 font-paragraph'>
+                          {progress.percentage}%
+                        </span>
+                      </div>
+                      <div className='w-full bg-gray-200 dark:bg-zinc-800 rounded-full h-1.5'>
+                        <div
+                          className='bg-zim-green-500 h-1.5 rounded-full transition-all duration-300'
+                          style={{ width: `${progress.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ) : null
+                })()}
 
                 {/* Metadata */}
                 <div className='mt-auto space-y-2 pt-3 border-t border-zinc-200 dark:border-zinc-800'>
