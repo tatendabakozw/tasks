@@ -23,16 +23,33 @@ export default function TodoCard({ todo, onDelete, onStatusChange }: TodoCardPro
     }
   }
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('text/plain', todo.id)
+    e.dataTransfer.effectAllowed = 'move'
+    // Add visual feedback
+    e.currentTarget.style.opacity = '0.5'
+  }
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    // Reset visual feedback
+    e.currentTarget.style.opacity = '1'
+  }
+
   return (
-    <div className='group bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 hover:shadow-md transition-all'>
+    <div
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      className='group bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 hover:shadow-md transition-all cursor-move'
+    >
       <div className='flex items-start justify-between mb-2'>
         <div className='flex items-start gap-2 flex-1'>
-          <button
+          <div
             className='cursor-move text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity'
             aria-label='Drag handle'
           >
             <GripVertical className='h-4 w-4' />
-          </button>
+          </div>
           <h4
             className={`font-paragraph font-medium text-sm flex-1 ${
               todo.status === 'Complete'

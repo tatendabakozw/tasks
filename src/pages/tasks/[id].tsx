@@ -20,6 +20,8 @@ export default function TaskDetail() {
   const { addTodo, deleteTodo, moveTodo } = useTasks()
   const { success, info, error: showError } = useToast()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [todoToDelete, setTodoToDelete] = useState<string | null>(null)
+  const [draggedOverColumn, setDraggedOverColumn] = useState<TodoStatus | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
   const [editedDescription, setEditedDescription] = useState('')
@@ -184,8 +186,15 @@ export default function TaskDetail() {
   }
 
   const handleDeleteTodo = (todoId: string) => {
-    const todo = task.todos?.find(t => t.id === todoId)
-    deleteTodo(task.id, todoId)
+    setTodoToDelete(todoId)
+  }
+
+  const confirmDeleteTodo = () => {
+    if (!todoToDelete) return
+    
+    const todo = task.todos?.find(t => t.id === todoToDelete)
+    deleteTodo(task.id, todoToDelete)
+    setTodoToDelete(null)
     if (todo) {
       success('Todo deleted', `"${todo.title}" has been removed`)
     }
@@ -196,6 +205,36 @@ export default function TaskDetail() {
     moveTodo(task.id, todoId, newStatus)
     if (todo) {
       info('Todo updated', `"${todo.title}" moved to ${newStatus}`)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent, status: TodoStatus) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDraggedOverColumn(status)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only remove highlight if we're actually leaving the drop zone
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const x = e.clientX
+    const y = e.clientY
+    
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      setDraggedOverColumn(null)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent, targetStatus: TodoStatus) => {
+    e.preventDefault()
+    setDraggedOverColumn(null)
+    
+    const todoId = e.dataTransfer.getData('text/plain')
+    if (todoId) {
+      const todo = task.todos?.find(t => t.id === todoId)
+      if (todo && todo.status !== targetStatus) {
+        handleMoveTodo(todoId, targetStatus)
+      }
     }
   }
 
@@ -534,7 +573,14 @@ export default function TaskDetail() {
                   {(task.todos || []).filter((t) => t.status === 'Pending').length} items
                 </p>
               </div>
-              <div className='bg-gray-50 dark:bg-zinc-900 rounded-b-lg p-3 space-y-3 min-h-[200px]'>
+              <div
+                onDragOver={(e) => handleDragOver(e, 'Pending')}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, 'Pending')}
+                className={`bg-gray-50 dark:bg-zinc-900 rounded-b-lg p-3 space-y-3 min-h-[200px] transition-colors ${
+                  draggedOverColumn === 'Pending' ? 'ring-2 ring-zim-green-500 ring-offset-2 bg-zim-green-50/50 dark:bg-zim-green-950/20' : ''
+                }`}
+              >
                 {(task.todos || [])
                   .filter((t) => t.status === 'Pending')
                   .map((todo) => (
@@ -561,7 +607,14 @@ export default function TaskDetail() {
                   {(task.todos || []).filter((t) => t.status === 'Todo').length} items
                 </p>
               </div>
-              <div className='bg-gray-50 dark:bg-zinc-900 rounded-b-lg p-3 space-y-3 min-h-[200px]'>
+              <div
+                onDragOver={(e) => handleDragOver(e, 'Todo')}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, 'Todo')}
+                className={`bg-gray-50 dark:bg-zinc-900 rounded-b-lg p-3 space-y-3 min-h-[200px] transition-colors ${
+                  draggedOverColumn === 'Todo' ? 'ring-2 ring-zim-green-500 ring-offset-2 bg-zim-green-50/50 dark:bg-zim-green-950/20' : ''
+                }`}
+              >
                 {(task.todos || [])
                   .filter((t) => t.status === 'Todo')
                   .map((todo) => (
@@ -585,7 +638,14 @@ export default function TaskDetail() {
                   {(task.todos || []).filter((t) => t.status === 'In Progress').length} items
                 </p>
               </div>
-              <div className='bg-gray-50 dark:bg-zinc-900 rounded-b-lg p-3 space-y-3 min-h-[200px]'>
+              <div
+                onDragOver={(e) => handleDragOver(e, 'In Progress')}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, 'In Progress')}
+                className={`bg-gray-50 dark:bg-zinc-900 rounded-b-lg p-3 space-y-3 min-h-[200px] transition-colors ${
+                  draggedOverColumn === 'In Progress' ? 'ring-2 ring-zim-green-500 ring-offset-2 bg-zim-green-50/50 dark:bg-zim-green-950/20' : ''
+                }`}
+              >
                 {(task.todos || [])
                   .filter((t) => t.status === 'In Progress')
                   .map((todo) => (
@@ -609,7 +669,14 @@ export default function TaskDetail() {
                   {(task.todos || []).filter((t) => t.status === 'Complete').length} items
                 </p>
               </div>
-              <div className='bg-gray-50 dark:bg-zinc-900 rounded-b-lg p-3 space-y-3 min-h-[200px]'>
+              <div
+                onDragOver={(e) => handleDragOver(e, 'Complete')}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, 'Complete')}
+                className={`bg-gray-50 dark:bg-zinc-900 rounded-b-lg p-3 space-y-3 min-h-[200px] transition-colors ${
+                  draggedOverColumn === 'Complete' ? 'ring-2 ring-zim-green-500 ring-offset-2 bg-zim-green-50/50 dark:bg-zim-green-950/20' : ''
+                }`}
+              >
                 {(task.todos || [])
                   .filter((t) => t.status === 'Complete')
                   .map((todo) => (
@@ -626,20 +693,34 @@ export default function TaskDetail() {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {task && (
-        <ConfirmModal
-          isOpen={showDeleteConfirm}
-          onClose={() => setShowDeleteConfirm(false)}
-          onConfirm={confirmDelete}
-          title='Delete Task'
-          message={`Are you sure you want to delete "${task.title}"? This action cannot be undone.`}
-          confirmText='Delete'
-          cancelText='Cancel'
-          variant='danger'
-        />
-      )}
-    </GeneralLayout>
-  )
-}
+          {/* Delete Task Confirmation Modal */}
+          {task && (
+            <ConfirmModal
+              isOpen={showDeleteConfirm}
+              onClose={() => setShowDeleteConfirm(false)}
+              onConfirm={confirmDelete}
+              title='Delete Task'
+              message={`Are you sure you want to delete "${task.title}"? This action cannot be undone.`}
+              confirmText='Delete'
+              cancelText='Cancel'
+              variant='danger'
+            />
+          )}
+
+          {/* Delete Todo Confirmation Modal */}
+          {todoToDelete && task && (
+            <ConfirmModal
+              isOpen={!!todoToDelete}
+              onClose={() => setTodoToDelete(null)}
+              onConfirm={confirmDeleteTodo}
+              title='Delete Todo'
+              message={`Are you sure you want to delete "${task.todos?.find(t => t.id === todoToDelete)?.title}"? This action cannot be undone.`}
+              confirmText='Delete'
+              cancelText='Cancel'
+              variant='danger'
+            />
+          )}
+        </GeneralLayout>
+      )
+    }
 
