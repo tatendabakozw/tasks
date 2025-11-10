@@ -1,5 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext } from 'react'
+import { useTasksQuery, useCreateTask, useCreateTodo } from '@/hooks/use-tasks-query'
 import { todosApi, tasksApi } from '@/utils/api'
+import { useQueryClient } from '@tanstack/react-query'
+import { taskKeys } from '@/hooks/use-tasks-query'
 
 export type TaskStatus = 'Todo' | 'Doing' | 'Done'
 export type TaskPriority = 'Low' | 'Medium' | 'High'
@@ -49,80 +52,10 @@ interface TasksContextType {
 const TasksContext = createContext<TasksContextType | undefined>(undefined)
 
 export function TasksProvider({ children }: { children: React.ReactNode }) {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  // Load tasks and todos from JSON Server on mount
-  useEffect(() => {
-    const loadTasks = async () => {
-      try {
-        setIsLoading(true)
-        // Fetch tasks and todos in parallel
-        const [tasksData, todosData] = await Promise.all([
-          tasksApi.getAll(),
-          todosApi.getAll(),
-        ])
-
-        // Combine todos with their tasks
-        const tasksWithTodos = tasksData.map((task: any) => {
-          const taskTodos = todosData
-            .filter((todo: any) => todo.taskId === task.id)
-            .map((todo: any) => ({
-              id: todo.id,
-              taskId: todo.taskId,
-              title: todo.title,
-              description: todo.description,
-              status: todo.status as TodoStatus,
-              createdAt: new Date(todo.createdAt),
-            }))
-
-          return {
-            id: task.id,
-            title: task.title,
-            description: task.description,
-            status: task.status as TaskStatus,
-            assignee: task.assignee || '',
-            dueDate: task.dueDate || '',
-            priority: task.priority as TaskPriority,
-            todos: taskTodos,
-            createdAt: new Date(task.createdAt),
-          }
-        })
-
-        setTasks(tasksWithTodos)
-      } catch (error) {
-        console.error('Error loading tasks:', error)
-        // Fallback to localStorage if API fails
-        const stored = localStorage.getItem('tasks')
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored)
-            const tasksWithDates = parsed.map((task: any) => ({
-              ...task,
-              status: task.status || 'Todo',
-              assignee: task.assignee || '',
-              dueDate: task.dueDate || '',
-              priority: task.priority || 'Medium',
-              todos: task.todos
-                ? task.todos.map((todo: any) => ({
-                    ...todo,
-                    createdAt: new Date(todo.createdAt),
-                  }))
-                : [],
-              createdAt: new Date(task.createdAt),
-            }))
-            setTasks(tasksWithDates)
-          } catch (e) {
-            console.error('Error loading from localStorage:', e)
-          }
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadTasks()
-  }, [])
+  const queryClient = useQueryClient()
+  const { data: tasks = [], isLoading } = useTasksQuery()
+  const createTaskMutation = useCreateTask()
+  const createTodoMutation = useCreateTodo()
 
   const addTask = async ({
     title,
@@ -139,55 +72,32 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     dueDate: string
     priority: TaskPriority
   }) => {
-    try {
-      // Create task in JSON Server
-      const newTask = await tasksApi.create({
-        title,
-        description,
-        status,
-        assignee,
-        dueDate,
-        priority,
-      })
-
-      // Update local state with the task from server
-      const taskItem: Task = {
-        id: newTask.id,
-        title: newTask.title,
-        description: newTask.description,
-        status: newTask.status as TaskStatus,
-        assignee: newTask.assignee,
-        dueDate: newTask.dueDate,
-        priority: newTask.priority as TaskPriority,
-        todos: newTask.todos
-          ? newTask.todos.map((todo: any) => ({
-              id: todo.id,
-              taskId: todo.taskId,
-              title: todo.title,
-              description: todo.description,
-              status: todo.status as TodoStatus,
-              createdAt: new Date(todo.createdAt),
-            }))
-          : [],
-        createdAt: new Date(newTask.createdAt),
-      }
-
-      setTasks((prev) => [taskItem, ...prev])
-    } catch (error) {
-      console.error('Error adding task:', error)
-      // Re-throw so caller can handle it (show toast, etc.)
-      throw error
-    }
+    await createTaskMutation.mutateAsync({
+      title,
+      description,
+      status,
+      assignee,
+      dueDate,
+      priority,
+    })
   }
 
   const updateTask = (id: string, updates: Partial<Task>) => {
-    setTasks((prev) =>
-      prev.map((task) => (task.id === id ? { ...task, ...updates } : task))
-    )
+    // Optimistic update with React Query
+    queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) => {
+      if (!old) return old
+      return old.map((task) => (task.id === id ? { ...task, ...updates } : task))
+    })
+    // TODO: Add API call for update when implemented
   }
 
   const deleteTask = (id: string) => {
-    setTasks((prev) => prev.filter((task) => task.id !== id))
+    // Optimistic update with React Query
+    queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) => {
+      if (!old) return old
+      return old.filter((task) => task.id !== id)
+    })
+    // TODO: Add API call for delete when implemented
   }
 
   const getTask = (id: string) => {
@@ -195,42 +105,18 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   }
 
   const addTodo = async (taskId: string, title: string, description?: string) => {
-    try {
-      // Create todo in JSON Server
-      const newTodo = await todosApi.create({
-        taskId,
-        title,
-        description,
-        status: 'Pending',
-      })
-
-      // Update local state with the todo from server
-      const todoItem: TodoItem = {
-        id: newTodo.id,
-        taskId: newTodo.taskId,
-        title: newTodo.title,
-        description: newTodo.description,
-        status: newTodo.status as TodoStatus,
-        createdAt: new Date(newTodo.createdAt),
-      }
-
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === taskId
-            ? { ...task, todos: [...(task.todos || []), todoItem] }
-            : task
-        )
-      )
-    } catch (error) {
-      console.error('Error adding todo:', error)
-      // Re-throw so caller can handle it (show toast, etc.)
-      throw error
-    }
+    await createTodoMutation.mutateAsync({
+      taskId,
+      title,
+      description,
+    })
   }
 
   const updateTodo = (taskId: string, todoId: string, updates: Partial<TodoItem>) => {
-    setTasks((prev) =>
-      prev.map((task) =>
+    // Optimistic update with React Query
+    queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) => {
+      if (!old) return old
+      return old.map((task) =>
         task.id === taskId
           ? {
               ...task,
@@ -240,12 +126,15 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
             }
           : task
       )
-    )
+    })
+    // TODO: Add API call for update when implemented
   }
 
   const deleteTodo = (taskId: string, todoId: string) => {
-    setTasks((prev) =>
-      prev.map((task) =>
+    // Optimistic update with React Query
+    queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) => {
+      if (!old) return old
+      return old.map((task) =>
         task.id === taskId
           ? {
               ...task,
@@ -253,7 +142,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
             }
           : task
       )
-    )
+    })
+    // TODO: Add API call for delete when implemented
   }
 
   const moveTodo = (taskId: string, todoId: string, newStatus: TodoStatus) => {

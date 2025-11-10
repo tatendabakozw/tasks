@@ -10,6 +10,17 @@
       "priority": "Medium",
       "todos": [],
       "createdAt": "2025-11-10T11:05:45.548Z"
+    },
+    {
+      "id": "dc87",
+      "title": "atsk 2",
+      "description": "cheking if tanstack query works",
+      "status": "Todo",
+      "assignee": "bako",
+      "dueDate": "2025-11-19",
+      "priority": "Medium",
+      "todos": [],
+      "createdAt": "2025-11-10T11:14:39.501Z"
     }
   ],
   "todos": []
