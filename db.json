@@ -34,22 +34,5 @@
       "createdAt": "2025-11-10T11:28:41.733Z"
     }
   ],
-  "todos": [
-    {
-      "id": "a0c1",
-      "taskId": "48d9",
-      "title": "todo 1",
-      "description": "checking tanstack",
-      "status": "Pending",
-      "createdAt": "2025-11-10T11:21:57.724Z"
-    },
-    {
-      "id": "8dc8",
-      "taskId": "48d9",
-      "title": "todo 2",
-      "description": "checkign loading",
-      "status": "Pending",
-      "createdAt": "2025-11-10T11:24:31.867Z"
-    }
-  ]
+  "todos": []
 }

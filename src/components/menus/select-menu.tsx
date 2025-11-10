@@ -185,6 +185,8 @@ export default function SelectMenu({
         ref={buttonRef}
         type='button'
         onClick={() => !disabled && setIsOpen(!isOpen)}
+        onMouseDown={(e) => e.stopPropagation()}
+        onDragStart={(e) => e.preventDefault()}
         disabled={disabled}
         className={`
           w-full flex items-center justify-between gap-2
@@ -269,6 +271,7 @@ export default function SelectMenu({
                       key={option.value}
                       type='button'
                       onClick={() => handleSelect(option)}
+                    onMouseDown={(e) => e.stopPropagation()}
                       disabled={isDisabled}
                       className={`
                         w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm

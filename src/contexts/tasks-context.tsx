@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react'
-import { useTasksQuery, useCreateTask, useCreateTodo, useUpdateTask, useDeleteTask } from '@/hooks/use-tasks-query'
+import { useTasksQuery, useCreateTask, useCreateTodo, useUpdateTask, useDeleteTask, useUpdateTodo, useDeleteTodo } from '@/hooks/use-tasks-query'
 import { useQueryClient } from '@tanstack/react-query'
 import { taskKeys } from '@/hooks/use-tasks-query'
 
@@ -43,9 +43,9 @@ interface TasksContextType {
   deleteTask: (id: string) => Promise<void>
   getTask: (id: string) => Task | undefined
   addTodo: (taskId: string, title: string, description?: string) => Promise<void>
-  updateTodo: (taskId: string, todoId: string, updates: Partial<TodoItem>) => void
-  deleteTodo: (taskId: string, todoId: string) => void
-  moveTodo: (taskId: string, todoId: string, newStatus: TodoStatus) => void
+  updateTodo: (taskId: string, todoId: string, updates: Partial<TodoItem>) => Promise<void>
+  deleteTodo: (taskId: string, todoId: string) => Promise<void>
+  moveTodo: (taskId: string, todoId: string, newStatus: TodoStatus) => Promise<void>
 }
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined)
@@ -57,6 +57,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const createTodoMutation = useCreateTodo()
   const updateTaskMutation = useUpdateTask()
   const deleteTaskMutation = useDeleteTask()
+  const updateTodoMutation = useUpdateTodo()
+  const deleteTodoMutation = useDeleteTodo()
 
   const addTask = async ({
     title,
@@ -103,7 +105,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
-  const updateTodo = (taskId: string, todoId: string, updates: Partial<TodoItem>) => {
+  const updateTodo = async (taskId: string, todoId: string, updates: Partial<TodoItem>) => {
     // Optimistic update with React Query
     queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) => {
       if (!old) return old
@@ -118,10 +120,37 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
           : task
       )
     })
-    // TODO: Add API call for update when implemented
+    
+    // Update detail query as well
+    queryClient.setQueryData<Task>(taskKeys.detail(taskId), (old) => {
+      if (!old) return old
+      return {
+        ...old,
+        todos: (old.todos || []).map((todo) =>
+          todo.id === todoId ? { ...todo, ...updates } : todo
+        ),
+      }
+    })
+
+    // Call API to persist changes
+    try {
+      await updateTodoMutation.mutateAsync({
+        id: todoId,
+        updates: {
+          title: updates.title,
+          description: updates.description,
+          status: updates.status,
+        },
+      })
+    } catch (error) {
+      // Revert optimistic update on error
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: taskKeys.detail(taskId) })
+      throw error
+    }
   }
 
-  const deleteTodo = (taskId: string, todoId: string) => {
+  const deleteTodo = async (taskId: string, todoId: string) => {
     // Optimistic update with React Query
     queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) => {
       if (!old) return old
@@ -134,11 +163,29 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
           : task
       )
     })
-    // TODO: Add API call for delete when implemented
+
+    // Update detail query as well
+    queryClient.setQueryData<Task>(taskKeys.detail(taskId), (old) => {
+      if (!old) return old
+      return {
+        ...old,
+        todos: (old.todos || []).filter((todo) => todo.id !== todoId),
+      }
+    })
+
+    // Call API to persist changes
+    try {
+      await deleteTodoMutation.mutateAsync(todoId)
+    } catch (error) {
+      // Revert optimistic update on error
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: taskKeys.detail(taskId) })
+      throw error
+    }
   }
 
-  const moveTodo = (taskId: string, todoId: string, newStatus: TodoStatus) => {
-    updateTodo(taskId, todoId, { status: newStatus })
+  const moveTodo = async (taskId: string, todoId: string, newStatus: TodoStatus) => {
+    await updateTodo(taskId, todoId, { status: newStatus })
   }
 
   return (

@@ -177,3 +177,36 @@ export function useCreateTodo() {
   })
 }
 
+  // Hook to update a todo
+export function useUpdateTodo() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: { title?: string; description?: string; status?: string } }) => {
+      return todosApi.update(id, updates)
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate tasks to refetch with updated todos
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
+      // We need to invalidate all detail queries since we don't know which task this todo belongs to
+      queryClient.invalidateQueries({ queryKey: taskKeys.details() })
+    },
+  })
+}
+
+// Hook to delete a todo
+export function useDeleteTodo() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      return todosApi.delete(id)
+    },
+    onSuccess: () => {
+      // Invalidate tasks to refetch with updated todos
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: taskKeys.details() })
+    },
+  })
+}
+

@@ -189,22 +189,30 @@ export default function TaskDetail() {
     setTodoToDelete(todoId)
   }
 
-  const confirmDeleteTodo = () => {
+  const confirmDeleteTodo = async () => {
     if (!todoToDelete) return
     
     const todo = task.todos?.find(t => t.id === todoToDelete)
-    deleteTodo(task.id, todoToDelete)
-    setTodoToDelete(null)
-    if (todo) {
-      success('Todo deleted', `"${todo.title}" has been removed`)
+    try {
+      await deleteTodo(task.id, todoToDelete)
+      setTodoToDelete(null)
+      if (todo) {
+        success('Todo deleted', `"${todo.title}" has been removed`)
+      }
+    } catch (error) {
+      showError('Error', 'Failed to delete todo. Please try again.')
     }
   }
 
-  const handleMoveTodo = (todoId: string, newStatus: TodoStatus) => {
+  const handleMoveTodo = async (todoId: string, newStatus: TodoStatus) => {
     const todo = task.todos?.find(t => t.id === todoId)
-    moveTodo(task.id, todoId, newStatus)
-    if (todo) {
-      info('Todo updated', `"${todo.title}" moved to ${newStatus}`)
+    try {
+      await moveTodo(task.id, todoId, newStatus)
+      if (todo && todo.status !== newStatus) {
+        info('Todo updated', `"${todo.title}" moved to ${newStatus}`)
+      }
+    } catch (error) {
+      showError('Error', 'Failed to update todo status. Please try again.')
     }
   }
 
@@ -225,7 +233,7 @@ export default function TaskDetail() {
     }
   }
 
-  const handleDrop = (e: React.DragEvent, targetStatus: TodoStatus) => {
+  const handleDrop = async (e: React.DragEvent, targetStatus: TodoStatus) => {
     e.preventDefault()
     setDraggedOverColumn(null)
     
@@ -233,7 +241,7 @@ export default function TaskDetail() {
     if (todoId) {
       const todo = task.todos?.find(t => t.id === todoId)
       if (todo && todo.status !== targetStatus) {
-        handleMoveTodo(todoId, targetStatus)
+        await handleMoveTodo(todoId, targetStatus)
       }
     }
   }

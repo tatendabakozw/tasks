@@ -24,6 +24,23 @@ export default function TodoCard({ todo, onDelete, onStatusChange }: TodoCardPro
   }
 
   const handleDragStart = (e: React.DragEvent) => {
+    // Don't start drag if clicking on interactive elements
+    const target = e.target as HTMLElement
+    if (
+      target.tagName === 'BUTTON' ||
+      target.closest('button') ||
+      target.closest('[role="button"]') ||
+      target.closest('input') ||
+      target.closest('select') ||
+      target.closest('[data-select-menu]') ||
+      target.closest('[role="listbox"]') ||
+      target.closest('[role="option"]')
+    ) {
+      e.preventDefault()
+      e.stopPropagation()
+      return false
+    }
+
     e.dataTransfer.setData('text/plain', todo.id)
     e.dataTransfer.effectAllowed = 'move'
     // Add visual feedback
@@ -35,11 +52,26 @@ export default function TodoCard({ todo, onDelete, onStatusChange }: TodoCardPro
     e.currentTarget.style.opacity = '1'
   }
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Prevent drag from starting when clicking on interactive elements
+    const target = e.target as HTMLElement
+    if (
+      target.closest('button') ||
+      target.closest('[role="button"]') ||
+      target.closest('input') ||
+      target.closest('select') ||
+      target.closest('[data-select-menu]')
+    ) {
+      e.stopPropagation()
+    }
+  }
+
   return (
     <div
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onMouseDown={handleMouseDown}
       className='group bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 hover:shadow-md transition-all cursor-move'
     >
       <div className='flex items-start justify-between mb-2'>
@@ -62,6 +94,8 @@ export default function TodoCard({ todo, onDelete, onStatusChange }: TodoCardPro
         </div>
         <button
           onClick={onDelete}
+          onMouseDown={(e) => e.stopPropagation()}
+          onDragStart={(e) => e.preventDefault()}
           className='flex-shrink-0 p-1 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 rounded transition-colors opacity-0 group-hover:opacity-100'
           aria-label='Delete todo'
         >
@@ -88,7 +122,7 @@ export default function TodoCard({ todo, onDelete, onStatusChange }: TodoCardPro
           {todo.status}
         </span>
         <div className='flex-1' />
-        <div onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} data-select-menu>
           <SelectMenu
             value={todo.status}
             onChange={(value) => onStatusChange(value as TodoStatus)}

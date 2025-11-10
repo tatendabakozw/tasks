@@ -137,5 +137,27 @@ export const todosApi = {
       }),
     })
   },
+  update: async (id: string, updates: {
+    title?: string
+    description?: string
+    status?: string
+  }) => {
+    return apiRequest<{
+      id: string
+      taskId: string
+      title: string
+      description?: string
+      status: string
+      createdAt: string
+    }>(`/todos/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    })
+  },
+  delete: async (id: string) => {
+    return apiRequest<void>(`/todos/${id}`, {
+      method: 'DELETE',
+    })
+  },
 }
 
