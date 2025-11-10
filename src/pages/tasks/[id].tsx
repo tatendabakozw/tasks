@@ -2,14 +2,16 @@ import React from 'react'
 import { useRouter } from 'next/router'
 import GeneralLayout from '@/layouts/general-layout'
 import { ArrowLeft, Trash2, Calendar, User, AlertCircle, CheckCircle2, Clock, Circle } from 'lucide-react'
-import { useTasks, TaskStatus } from '@/contexts/tasks-context'
+import { useTasks, TaskStatus, TodoStatus } from '@/contexts/tasks-context'
 import PrimaryButton from '@/components/buttons/primary-button'
 import { format } from 'date-fns'
+import TodoCard from '@/components/todos/todo-card'
+import AddTodoForm from '@/components/todos/add-todo-form'
 
 export default function TaskDetail() {
   const router = useRouter()
   const { id } = router.query
-  const { getTask, updateTask, deleteTask } = useTasks()
+  const { getTask, updateTask, deleteTask, addTodo, deleteTodo, moveTodo } = useTasks()
   const [isLoading, setIsLoading] = React.useState(true)
 
   React.useEffect(() => {
@@ -95,7 +97,7 @@ export default function TaskDetail() {
 
   return (
     <GeneralLayout>
-      <div className='max-w-3xl mx-auto w-full'>
+      <div className='max-w-7xl mx-auto w-full'>
         {/* Back Button */}
         <button
           onClick={() => router.push('/')}
@@ -242,6 +244,116 @@ export default function TaskDetail() {
                 <CheckCircle2 className='h-4 w-4 inline mr-2' />
                 Done
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Todos Kanban Board */}
+        <div className='mt-8'>
+          <div className='flex items-center justify-between mb-6'>
+            <h2 className='text-2xl font-semibold text-gray-900 dark:text-white font-heading'>
+              Todos
+            </h2>
+          </div>
+
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
+            {/* Pending Column */}
+            <div className='flex flex-col'>
+              <div className='bg-gray-100 dark:bg-zinc-800 rounded-t-lg px-4 py-3 border-b border-zinc-200 dark:border-zinc-700'>
+                <h3 className='text-sm font-semibold text-gray-700 dark:text-gray-300 font-subheading'>
+                  Pending
+                </h3>
+                <p className='text-xs text-gray-500 dark:text-gray-500 mt-1'>
+                  {(task.todos || []).filter((t) => t.status === 'Pending').length} items
+                </p>
+              </div>
+              <div className='bg-gray-50 dark:bg-zinc-900 rounded-b-lg p-3 space-y-3 min-h-[200px]'>
+                {(task.todos || [])
+                  .filter((t) => t.status === 'Pending')
+                  .map((todo) => (
+                    <TodoCard
+                      key={todo.id}
+                      todo={todo}
+                      onDelete={() => deleteTodo(task.id, todo.id)}
+                      onStatusChange={(newStatus) => moveTodo(task.id, todo.id, newStatus)}
+                    />
+                  ))}
+                <AddTodoForm
+                  onAdd={(title, description) => addTodo(task.id, title, description)}
+                />
+              </div>
+            </div>
+
+            {/* Todo Column */}
+            <div className='flex flex-col'>
+              <div className='bg-blue-100 dark:bg-blue-900/30 rounded-t-lg px-4 py-3 border-b border-blue-200 dark:border-blue-800'>
+                <h3 className='text-sm font-semibold text-blue-700 dark:text-blue-400 font-subheading'>
+                  Todo
+                </h3>
+                <p className='text-xs text-blue-600 dark:text-blue-500 mt-1'>
+                  {(task.todos || []).filter((t) => t.status === 'Todo').length} items
+                </p>
+              </div>
+              <div className='bg-gray-50 dark:bg-zinc-900 rounded-b-lg p-3 space-y-3 min-h-[200px]'>
+                {(task.todos || [])
+                  .filter((t) => t.status === 'Todo')
+                  .map((todo) => (
+                    <TodoCard
+                      key={todo.id}
+                      todo={todo}
+                      onDelete={() => deleteTodo(task.id, todo.id)}
+                      onStatusChange={(newStatus) => moveTodo(task.id, todo.id, newStatus)}
+                    />
+                  ))}
+              </div>
+            </div>
+
+            {/* In Progress Column */}
+            <div className='flex flex-col'>
+              <div className='bg-amber-100 dark:bg-amber-900/30 rounded-t-lg px-4 py-3 border-b border-amber-200 dark:border-amber-800'>
+                <h3 className='text-sm font-semibold text-amber-700 dark:text-amber-400 font-subheading'>
+                  In Progress
+                </h3>
+                <p className='text-xs text-amber-600 dark:text-amber-500 mt-1'>
+                  {(task.todos || []).filter((t) => t.status === 'In Progress').length} items
+                </p>
+              </div>
+              <div className='bg-gray-50 dark:bg-zinc-900 rounded-b-lg p-3 space-y-3 min-h-[200px]'>
+                {(task.todos || [])
+                  .filter((t) => t.status === 'In Progress')
+                  .map((todo) => (
+                    <TodoCard
+                      key={todo.id}
+                      todo={todo}
+                      onDelete={() => deleteTodo(task.id, todo.id)}
+                      onStatusChange={(newStatus) => moveTodo(task.id, todo.id, newStatus)}
+                    />
+                  ))}
+              </div>
+            </div>
+
+            {/* Complete Column */}
+            <div className='flex flex-col'>
+              <div className='bg-emerald-100 dark:bg-emerald-900/30 rounded-t-lg px-4 py-3 border-b border-emerald-200 dark:border-emerald-800'>
+                <h3 className='text-sm font-semibold text-emerald-700 dark:text-emerald-400 font-subheading'>
+                  Complete
+                </h3>
+                <p className='text-xs text-emerald-600 dark:text-emerald-500 mt-1'>
+                  {(task.todos || []).filter((t) => t.status === 'Complete').length} items
+                </p>
+              </div>
+              <div className='bg-gray-50 dark:bg-zinc-900 rounded-b-lg p-3 space-y-3 min-h-[200px]'>
+                {(task.todos || [])
+                  .filter((t) => t.status === 'Complete')
+                  .map((todo) => (
+                    <TodoCard
+                      key={todo.id}
+                      todo={todo}
+                      onDelete={() => deleteTodo(task.id, todo.id)}
+                      onStatusChange={(newStatus) => moveTodo(task.id, todo.id, newStatus)}
+                    />
+                  ))}
+              </div>
             </div>
           </div>
         </div>

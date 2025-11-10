@@ -2,6 +2,15 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 
 export type TaskStatus = 'Todo' | 'Doing' | 'Done'
 export type TaskPriority = 'Low' | 'Medium' | 'High'
+export type TodoStatus = 'Pending' | 'Todo' | 'In Progress' | 'Complete'
+
+export interface TodoItem {
+  id: string
+  title: string
+  description?: string
+  status: TodoStatus
+  createdAt: Date
+}
 
 export interface Task {
   id: string
@@ -11,6 +20,7 @@ export interface Task {
   assignee: string
   dueDate: string // ISO date string
   priority: TaskPriority
+  todos: TodoItem[]
   createdAt: Date
 }
 
@@ -27,6 +37,10 @@ interface TasksContextType {
   updateTask: (id: string, updates: Partial<Task>) => void
   deleteTask: (id: string) => void
   getTask: (id: string) => Task | undefined
+  addTodo: (taskId: string, title: string, description?: string) => void
+  updateTodo: (taskId: string, todoId: string, updates: Partial<TodoItem>) => void
+  deleteTodo: (taskId: string, todoId: string) => void
+  moveTodo: (taskId: string, todoId: string, newStatus: TodoStatus) => void
 }
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined)
@@ -54,6 +68,12 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
             assignee: task.assignee || '',
             dueDate: task.dueDate || '',
             priority: task.priority || 'Medium',
+            todos: task.todos
+              ? task.todos.map((todo: any) => ({
+                  ...todo,
+                  createdAt: new Date(todo.createdAt),
+                }))
+              : [],
             createdAt: new Date(task.createdAt),
           }
         })
@@ -94,6 +114,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       assignee,
       dueDate,
       priority,
+      todos: [],
       createdAt: new Date(),
     }
     setTasks((prev) => [newTask, ...prev])
@@ -113,9 +134,68 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     return tasks.find((task) => task.id === id)
   }
 
+  const addTodo = (taskId: string, title: string, description?: string) => {
+    const newTodo: TodoItem = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      title,
+      description,
+      status: 'Pending',
+      createdAt: new Date(),
+    }
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? { ...task, todos: [...(task.todos || []), newTodo] }
+          : task
+      )
+    )
+  }
+
+  const updateTodo = (taskId: string, todoId: string, updates: Partial<TodoItem>) => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              todos: (task.todos || []).map((todo) =>
+                todo.id === todoId ? { ...todo, ...updates } : todo
+              ),
+            }
+          : task
+      )
+    )
+  }
+
+  const deleteTodo = (taskId: string, todoId: string) => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              todos: (task.todos || []).filter((todo) => todo.id !== todoId),
+            }
+          : task
+      )
+    )
+  }
+
+  const moveTodo = (taskId: string, todoId: string, newStatus: TodoStatus) => {
+    updateTodo(taskId, todoId, { status: newStatus })
+  }
+
   return (
     <TasksContext.Provider
-      value={{ tasks, addTask, updateTask, deleteTask, getTask }}
+      value={{
+        tasks,
+        addTask,
+        updateTask,
+        deleteTask,
+        getTask,
+        addTodo,
+        updateTodo,
+        deleteTodo,
+        moveTodo,
+      }}
     >
       {children}
     </TasksContext.Provider>
