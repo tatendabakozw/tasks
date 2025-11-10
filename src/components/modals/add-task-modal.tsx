@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, AlertCircle } from 'lucide-react'
 import PrimaryButton from '@/components/buttons/primary-button'
 import { TaskStatus, TaskPriority } from '@/contexts/tasks-context'
 import SelectMenu from '@/components/menus/select-menu'
@@ -18,14 +18,22 @@ interface AddTaskModalProps {
   }) => void
 }
 
+interface FormErrors {
+  title?: string
+  status?: string
+  priority?: string
+}
+
 export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalProps) {
-  const { success } = useToast()
+  const { success, error: showError } = useToast()
   const [taskTitle, setTaskTitle] = React.useState('')
   const [taskDescription, setTaskDescription] = React.useState('')
   const [taskStatus, setTaskStatus] = React.useState<TaskStatus>('Todo')
   const [taskAssignee, setTaskAssignee] = React.useState('')
   const [taskDueDate, setTaskDueDate] = React.useState('')
   const [taskPriority, setTaskPriority] = React.useState<TaskPriority>('Medium')
+  const [errors, setErrors] = React.useState<FormErrors>({})
+  const [touched, setTouched] = React.useState<Record<string, boolean>>({})
 
   useEffect(() => {
     if (isOpen) {
@@ -35,6 +43,8 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
       setTaskAssignee('')
       setTaskDueDate('')
       setTaskPriority('Medium')
+      setErrors({})
+      setTouched({})
       // Focus input when modal opens
       const timer = setTimeout(() => {
         const input = document.getElementById('task-input')
@@ -43,6 +53,56 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
       return () => clearTimeout(timer)
     }
   }, [isOpen])
+
+  const validateForm = (): { isValid: boolean; errors: FormErrors; firstError?: string } => {
+    const newErrors: FormErrors = {}
+
+    if (!taskTitle.trim()) {
+      newErrors.title = 'Task title is required'
+    }
+
+    if (!taskStatus) {
+      newErrors.status = 'Status is required'
+    }
+
+    if (!taskPriority) {
+      newErrors.priority = 'Priority is required'
+    }
+
+    setErrors(newErrors)
+    const firstError = Object.values(newErrors).find(Boolean)
+    return {
+      isValid: Object.keys(newErrors).length === 0,
+      errors: newErrors,
+      firstError,
+    }
+  }
+
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }))
+    // Validate only the touched field
+    const newErrors: FormErrors = { ...errors }
+    
+    if (field === 'title' && !taskTitle.trim()) {
+      newErrors.title = 'Task title is required'
+    } else if (field === 'title') {
+      delete newErrors.title
+    }
+
+    if (field === 'status' && !taskStatus) {
+      newErrors.status = 'Status is required'
+    } else if (field === 'status') {
+      delete newErrors.status
+    }
+
+    if (field === 'priority' && !taskPriority) {
+      newErrors.priority = 'Priority is required'
+    } else if (field === 'priority') {
+      delete newErrors.priority
+    }
+
+    setErrors(newErrors)
+  }
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -56,24 +116,37 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (taskTitle.trim()) {
-      onAdd({
-        title: taskTitle.trim(),
-        description: taskDescription.trim(),
-        status: taskStatus,
-        assignee: taskAssignee.trim(),
-        dueDate: taskDueDate || new Date().toISOString().split('T')[0],
-        priority: taskPriority,
-      })
-      success('Task created', `"${taskTitle.trim()}" has been added successfully`)
-      setTaskTitle('')
-      setTaskDescription('')
-      setTaskStatus('Todo')
-      setTaskAssignee('')
-      setTaskDueDate('')
-      setTaskPriority('Medium')
-      onClose()
+    
+    // Mark all fields as touched
+    setTouched({ title: true, status: true, priority: true })
+    
+    const validation = validateForm()
+    if (!validation.isValid) {
+      // Show toast for validation errors
+      if (validation.firstError) {
+        showError('Validation Error', validation.firstError)
+      }
+      return
     }
+
+    onAdd({
+      title: taskTitle.trim(),
+      description: taskDescription.trim(),
+      status: taskStatus,
+      assignee: taskAssignee.trim(),
+      dueDate: taskDueDate || new Date().toISOString().split('T')[0],
+      priority: taskPriority,
+    })
+    success('Task created', `"${taskTitle.trim()}" has been added successfully`)
+    setTaskTitle('')
+    setTaskDescription('')
+    setTaskStatus('Todo')
+    setTaskAssignee('')
+    setTaskDueDate('')
+    setTaskPriority('Medium')
+    setErrors({})
+    setTouched({})
+    onClose()
   }
 
   if (!isOpen) return null
@@ -120,12 +193,27 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
                   id='task-input'
                   type='text'
                   value={taskTitle}
-                  onChange={(e) => setTaskTitle(e.target.value)}
+                  onChange={(e) => {
+                    setTaskTitle(e.target.value)
+                    if (touched.title && errors.title) {
+                      handleBlur('title')
+                    }
+                  }}
+                  onBlur={() => handleBlur('title')}
                   placeholder='What needs to be done?'
-                  className='w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all'
+                  className={`w-full px-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none font-paragraph transition-all ${
+                    touched.title && errors.title
+                      ? 'border-red-500 dark:border-red-500 focus:ring-2 focus:ring-red-500/50 focus:border-red-500'
+                      : 'border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50'
+                  }`}
                   autoFocus
-                  required
                 />
+                {touched.title && errors.title && (
+                  <div className='mt-1.5 flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400 font-paragraph'>
+                    <AlertCircle className='h-4 w-4 flex-shrink-0' />
+                    <span>{errors.title}</span>
+                  </div>
+                )}
               </div>
               
               <div>
@@ -153,16 +241,32 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
                 >
                   Status *
                 </label>
-                <SelectMenu
-                  value={taskStatus}
-                  onChange={(value) => setTaskStatus(value as TaskStatus)}
-                  options={[
-                    { value: 'Todo', label: 'Todo' },
-                    { value: 'Doing', label: 'Doing' },
-                    { value: 'Done', label: 'Done' },
-                  ]}
-                  placeholder='Select status...'
-                />
+                <div
+                  onBlur={() => handleBlur('status')}
+                  className={touched.status && errors.status ? 'rounded-lg ring-2 ring-red-500/50' : ''}
+                >
+                  <SelectMenu
+                    value={taskStatus}
+                    onChange={(value) => {
+                      setTaskStatus(value as TaskStatus)
+                      if (touched.status && errors.status) {
+                        handleBlur('status')
+                      }
+                    }}
+                    options={[
+                      { value: 'Todo', label: 'Todo' },
+                      { value: 'Doing', label: 'Doing' },
+                      { value: 'Done', label: 'Done' },
+                    ]}
+                    placeholder='Select status...'
+                  />
+                </div>
+                {touched.status && errors.status && (
+                  <div className='mt-1.5 flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400 font-paragraph'>
+                    <AlertCircle className='h-4 w-4 flex-shrink-0' />
+                    <span>{errors.status}</span>
+                  </div>
+                )}
               </div>
 
               {/* Assignee */}
@@ -208,16 +312,32 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
                 >
                   Priority *
                 </label>
-                <SelectMenu
-                  value={taskPriority}
-                  onChange={(value) => setTaskPriority(value as TaskPriority)}
-                  options={[
-                    { value: 'Low', label: 'Low' },
-                    { value: 'Medium', label: 'Medium' },
-                    { value: 'High', label: 'High' },
-                  ]}
-                  placeholder='Select priority...'
-                />
+                <div
+                  onBlur={() => handleBlur('priority')}
+                  className={touched.priority && errors.priority ? 'rounded-lg ring-2 ring-red-500/50' : ''}
+                >
+                  <SelectMenu
+                    value={taskPriority}
+                    onChange={(value) => {
+                      setTaskPriority(value as TaskPriority)
+                      if (touched.priority && errors.priority) {
+                        handleBlur('priority')
+                      }
+                    }}
+                    options={[
+                      { value: 'Low', label: 'Low' },
+                      { value: 'Medium', label: 'Medium' },
+                      { value: 'High', label: 'High' },
+                    ]}
+                    placeholder='Select priority...'
+                  />
+                </div>
+                {touched.priority && errors.priority && (
+                  <div className='mt-1.5 flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400 font-paragraph'>
+                    <AlertCircle className='h-4 w-4 flex-shrink-0' />
+                    <span>{errors.priority}</span>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -134,35 +134,39 @@ function ToastItem({
     switch (type) {
       case 'success':
         return {
-          bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+          bg: 'bg-emerald-50 dark:bg-emerald-950',
           border: 'border-emerald-200 dark:border-emerald-800',
           icon: 'text-emerald-600 dark:text-emerald-400',
-          iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
+          iconBg: 'bg-emerald-100 dark:bg-emerald-900',
           title: 'text-emerald-900 dark:text-emerald-100',
+          message: 'text-emerald-700 dark:text-emerald-300',
         }
       case 'error':
         return {
-          bg: 'bg-red-50 dark:bg-red-900/20',
+          bg: 'bg-red-50 dark:bg-red-950',
           border: 'border-red-200 dark:border-red-800',
           icon: 'text-red-600 dark:text-red-400',
-          iconBg: 'bg-red-100 dark:bg-red-900/30',
+          iconBg: 'bg-red-100 dark:bg-red-900',
           title: 'text-red-900 dark:text-red-100',
+          message: 'text-red-700 dark:text-red-300',
         }
       case 'warning':
         return {
-          bg: 'bg-amber-50 dark:bg-amber-900/20',
+          bg: 'bg-amber-50 dark:bg-amber-950',
           border: 'border-amber-200 dark:border-amber-800',
           icon: 'text-amber-600 dark:text-amber-400',
-          iconBg: 'bg-amber-100 dark:bg-amber-900/30',
+          iconBg: 'bg-amber-100 dark:bg-amber-900',
           title: 'text-amber-900 dark:text-amber-100',
+          message: 'text-amber-700 dark:text-amber-300',
         }
       case 'info':
         return {
-          bg: 'bg-blue-50 dark:bg-blue-900/20',
+          bg: 'bg-blue-50 dark:bg-blue-950',
           border: 'border-blue-200 dark:border-blue-800',
           icon: 'text-blue-600 dark:text-blue-400',
-          iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+          iconBg: 'bg-blue-100 dark:bg-blue-900',
           title: 'text-blue-900 dark:text-blue-100',
+          message: 'text-blue-700 dark:text-blue-300',
         }
     }
   }
@@ -208,7 +212,7 @@ function ToastItem({
           {toast.title}
         </h4>
         {toast.message && (
-          <p className='text-sm text-gray-600 dark:text-gray-400 font-paragraph'>
+          <p className={`text-sm font-paragraph ${styles.message}`}>
             {toast.message}
           </p>
         )}
