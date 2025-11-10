@@ -9,7 +9,7 @@ type Props = {
 
 function GeneralLayout({ children }: Props) {
   return (
-    <div className='flex flex-col min-h-screen bg-zim-cream-50 dark:bg-zim-cream-900 transition-colors'>
+    <div className='flex flex-col min-h-screen bg-white dark:bg-zinc-900 transition-colors'>
       {/* Navbar */}
       <GeneralNavbar/>
 

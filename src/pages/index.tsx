@@ -27,24 +27,24 @@ function index() {
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
       case 'Todo':
-        return 'bg-zim-cream-100 dark:bg-zim-cream-800 text-zim-cream-700 dark:text-zim-cream-300'
+        return 'bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300'
       case 'Doing':
-        return 'bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-400'
+        return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
       case 'Done':
-        return 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400'
+        return 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
     }
   }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'High':
-        return 'bg-zim-red-100 dark:bg-zim-red-900/30 text-zim-red-700 dark:text-zim-red-400'
+        return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
       case 'Medium':
-        return 'bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-400'
+        return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
       case 'Low':
         return 'bg-zim-green-100 dark:bg-zim-green-900/30 text-zim-green-700 dark:text-zim-green-400'
       default:
-        return 'bg-zim-cream-100 dark:bg-zim-cream-800 text-zim-cream-700 dark:text-zim-cream-300'
+        return 'bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300'
     }
   }
 
@@ -75,10 +75,10 @@ function index() {
         <div className='mb-8'>
           <div className='flex items-center justify-between mb-6'>
             <div>
-              <h1 className='text-3xl font-bold text-zim-cream-900 dark:text-zim-cream-50 mb-2 font-heading'>
+              <h1 className='text-3xl font-bold text-gray-900 dark:text-white mb-2 font-heading'>
                 My Tasks
           </h1>
-              <p className='text-sm text-zim-cream-600 dark:text-zim-cream-400 font-paragraph'>
+              <p className='text-sm text-gray-600 dark:text-gray-400 font-paragraph'>
                 {doneCount} of {totalCount} completed
               </p>
             </div>
@@ -91,72 +91,72 @@ function index() {
           {totalCount > 0 && (
             <div className='grid grid-cols-2 md:grid-cols-5 gap-4 mb-6'>
               {/* Total Tasks */}
-              <div className='p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50'>
+              <div className='p-4 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800'>
                 <div className='flex items-center gap-3 mb-2'>
-                  <div className='p-2 bg-zim-cream-100 dark:bg-zim-cream-800 rounded-lg'>
-                    <Circle className='h-4 w-4 text-zim-cream-600 dark:text-zim-cream-400' />
+                  <div className='p-2 bg-gray-100 dark:bg-zinc-800 rounded-lg'>
+                    <Circle className='h-4 w-4 text-gray-600 dark:text-gray-400' />
                   </div>
-                  <span className='text-xs font-medium text-zim-cream-600 dark:text-zim-cream-400 font-badge uppercase tracking-wide'>
+                  <span className='text-xs font-medium text-gray-600 dark:text-gray-400 font-badge uppercase tracking-wide'>
                     Total
                   </span>
                 </div>
-                <p className='text-2xl font-bold text-zim-cream-900 dark:text-zim-cream-50 font-heading'>
+                <p className='text-2xl font-bold text-gray-900 dark:text-white font-heading'>
                   {totalCount}
                 </p>
               </div>
 
               {/* Todo Tasks */}
-              <div className='p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50'>
+              <div className='p-4 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800'>
                 <div className='flex items-center gap-3 mb-2'>
-                  <div className='p-2 bg-zim-cream-100 dark:bg-zim-cream-800 rounded-lg'>
-                    <Circle className='h-4 w-4 text-zim-cream-600 dark:text-zim-cream-400' />
+                  <div className='p-2 bg-gray-100 dark:bg-zinc-800 rounded-lg'>
+                    <Circle className='h-4 w-4 text-gray-600 dark:text-gray-400' />
                   </div>
-                  <span className='text-xs font-medium text-zim-cream-600 dark:text-zim-cream-400 font-badge uppercase tracking-wide'>
+                  <span className='text-xs font-medium text-gray-600 dark:text-gray-400 font-badge uppercase tracking-wide'>
                     Todo
                   </span>
                 </div>
-                <p className='text-2xl font-bold text-zim-cream-900 dark:text-zim-cream-50 font-heading'>
+                <p className='text-2xl font-bold text-gray-900 dark:text-white font-heading'>
                   {todoCount}
                 </p>
               </div>
 
               {/* Doing Tasks */}
-              <div className='p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50'>
+              <div className='p-4 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800'>
                 <div className='flex items-center gap-3 mb-2'>
-                  <div className='p-2 bg-warning-100 dark:bg-warning-900/30 rounded-lg'>
-                    <Clock className='h-4 w-4 text-warning-600 dark:text-warning-400' />
+                  <div className='p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg'>
+                    <Clock className='h-4 w-4 text-amber-600 dark:text-amber-400' />
                   </div>
-                  <span className='text-xs font-medium text-zim-cream-600 dark:text-zim-cream-400 font-badge uppercase tracking-wide'>
+                  <span className='text-xs font-medium text-gray-600 dark:text-gray-400 font-badge uppercase tracking-wide'>
                     Doing
                   </span>
                 </div>
-                <p className='text-2xl font-bold text-warning-600 dark:text-warning-400 font-heading'>
+                <p className='text-2xl font-bold text-amber-600 dark:text-amber-400 font-heading'>
                   {doingCount}
                 </p>
               </div>
 
               {/* Done Tasks */}
-              <div className='p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50'>
+              <div className='p-4 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800'>
                 <div className='flex items-center gap-3 mb-2'>
-                  <div className='p-2 bg-success-100 dark:bg-success-900/30 rounded-lg'>
-                    <CheckCircle2 className='h-4 w-4 text-success-600 dark:text-success-400' />
+                  <div className='p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg'>
+                    <CheckCircle2 className='h-4 w-4 text-emerald-600 dark:text-emerald-400' />
                   </div>
-                  <span className='text-xs font-medium text-zim-cream-600 dark:text-zim-cream-400 font-badge uppercase tracking-wide'>
+                  <span className='text-xs font-medium text-gray-600 dark:text-gray-400 font-badge uppercase tracking-wide'>
                     Done
                   </span>
                 </div>
-                <p className='text-2xl font-bold text-success-600 dark:text-success-400 font-heading'>
+                <p className='text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-heading'>
                   {doneCount}
                 </p>
               </div>
 
               {/* Completion Rate */}
-              <div className='p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50'>
+              <div className='p-4 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800'>
                 <div className='flex items-center gap-3 mb-2'>
                   <div className='p-2 bg-zim-green-100 dark:bg-zim-green-900/30 rounded-lg'>
                     <TrendingUp className='h-4 w-4 text-zim-green-600 dark:text-zim-green-400' />
                   </div>
-                  <span className='text-xs font-medium text-zim-cream-600 dark:text-zim-cream-400 font-badge uppercase tracking-wide'>
+                  <span className='text-xs font-medium text-gray-600 dark:text-gray-400 font-badge uppercase tracking-wide'>
                     Progress
                   </span>
                 </div>
@@ -172,13 +172,13 @@ function index() {
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
           {tasks.length === 0 ? (
             <div className='col-span-full text-center py-12 px-4'>
-              <div className='inline-flex items-center justify-center w-16 h-16 rounded-full bg-zim-cream-100 dark:bg-zim-cream-800 mb-4'>
-                <Circle className='h-8 w-8 text-zim-cream-400 dark:text-zim-cream-500' />
+              <div className='inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-800 mb-4'>
+                <Circle className='h-8 w-8 text-gray-400 dark:text-gray-500' />
               </div>
-              <h3 className='text-lg font-semibold text-zim-cream-900 dark:text-zim-cream-50 mb-2 font-heading'>
+              <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-2 font-heading'>
                 No tasks yet
               </h3>
-              <p className='text-sm text-zim-cream-600 dark:text-zim-cream-400 font-paragraph'>
+              <p className='text-sm text-gray-600 dark:text-gray-400 font-paragraph'>
                 Get started by adding your first task
               </p>
             </div>
@@ -186,7 +186,7 @@ function index() {
             tasks.map((task) => (
               <div
                 key={task.id}
-                className='group flex flex-col p-5 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50 hover:border-zim-green-300/50 dark:hover:border-zim-green-700/50 transition-all cursor-pointer'
+                className='group flex flex-col p-5 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-zim-green-300 dark:hover:border-zim-green-700 transition-all cursor-pointer'
                 onClick={() => handleTaskClick(task.id)}
               >
                 {/* Header */}
@@ -194,8 +194,8 @@ function index() {
                   <h3
                     className={`font-paragraph font-semibold text-base flex-1 ${
                       task.status === 'Done'
-                        ? 'text-zim-cream-500 dark:text-zim-cream-500 line-through'
-                        : 'text-zim-cream-900 dark:text-zim-cream-50'
+                        ? 'text-gray-400 dark:text-gray-500 line-through'
+                        : 'text-gray-900 dark:text-white'
                     }`}
                   >
                     {task.title}
@@ -205,7 +205,7 @@ function index() {
                       e.stopPropagation()
                       deleteTask(task.id)
                     }}
-                    className='flex-shrink-0 p-1.5 text-zim-cream-400 dark:text-zim-cream-500 hover:text-zim-red-500 dark:hover:text-zim-red-400 rounded transition-colors opacity-0 group-hover:opacity-100'
+                    className='flex-shrink-0 p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 rounded transition-colors opacity-0 group-hover:opacity-100'
                     aria-label='Delete task'
                   >
                     <Trash2 className='h-4 w-4' />
@@ -217,8 +217,8 @@ function index() {
                   <p
                     className={`text-sm font-paragraph mb-4 line-clamp-2 ${
                       task.status === 'Done'
-                        ? 'text-zim-cream-400 dark:text-zim-cream-600 line-through'
-                        : 'text-zim-cream-600 dark:text-zim-cream-400'
+                        ? 'text-gray-400 dark:text-gray-600 line-through'
+                        : 'text-gray-600 dark:text-gray-400'
                     }`}
                   >
                     {task.description}
@@ -240,9 +240,9 @@ function index() {
                 </div>
 
                 {/* Metadata */}
-                <div className='mt-auto space-y-2 pt-3 border-t border-zinc-200/50 dark:border-zinc-800/50'>
+                <div className='mt-auto space-y-2 pt-3 border-t border-zinc-200 dark:border-zinc-800'>
                   {task.assignee && (
-                    <div className='flex items-center gap-2 text-xs text-zim-cream-600 dark:text-zim-cream-400 font-paragraph'>
+                    <div className='flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-paragraph'>
                       <User className='h-3.5 w-3.5' />
                       <span className='truncate'>{task.assignee}</span>
                     </div>
@@ -250,8 +250,8 @@ function index() {
                   {task.dueDate && (
                     <div className={`flex items-center gap-2 text-xs font-paragraph ${
                       isOverdue(task.dueDate) && task.status !== 'Done'
-                        ? 'text-zim-red-600 dark:text-zim-red-400'
-                        : 'text-zim-cream-600 dark:text-zim-cream-400'
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-gray-600 dark:text-gray-400'
                     }`}>
                       <Calendar className='h-3.5 w-3.5' />
                       <span>{formatDueDate(task.dueDate)}</span>

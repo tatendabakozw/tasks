@@ -42,7 +42,7 @@ export default function PrimaryButton({
       className={`
         flex items-center justify-center gap-2
         bg-zim-green-500 hover:bg-zim-green-600
-        disabled:bg-zim-cream-400 disabled:cursor-not-allowed
+        disabled:bg-gray-400 disabled:cursor-not-allowed
         text-white rounded-lg font-buttons font-medium
         transition-colors shadow-sm hover:shadow-md
         ${sizeClasses[size]}
