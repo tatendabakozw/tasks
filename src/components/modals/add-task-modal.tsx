@@ -1,18 +1,21 @@
 import React, { useEffect } from 'react'
 import { X } from 'lucide-react'
+import PrimaryButton from '@/components/buttons/primary-button'
 
 interface AddTaskModalProps {
   isOpen: boolean
   onClose: () => void
-  onAdd: (title: string) => void
+  onAdd: (title: string, description: string) => void
 }
 
 export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalProps) {
   const [taskTitle, setTaskTitle] = React.useState('')
+  const [taskDescription, setTaskDescription] = React.useState('')
 
   useEffect(() => {
     if (isOpen) {
       setTaskTitle('')
+      setTaskDescription('')
       // Focus input when modal opens
       const timer = setTimeout(() => {
         const input = document.getElementById('task-input')
@@ -35,8 +38,9 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (taskTitle.trim()) {
-      onAdd(taskTitle.trim())
+      onAdd(taskTitle.trim(), taskDescription.trim())
       setTaskTitle('')
+      setTaskDescription('')
       onClose()
     }
   }
@@ -73,22 +77,42 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
 
           {/* Form */}
           <form onSubmit={handleSubmit} className='p-6'>
-            <div className='mb-6'>
-              <label
-                htmlFor='task-input'
-                className='block text-sm font-medium text-zim-cream-700 dark:text-zim-cream-300 mb-2 font-paragraph'
-              >
-                Task Title
-              </label>
-              <input
-                id='task-input'
-                type='text'
-                value={taskTitle}
-                onChange={(e) => setTaskTitle(e.target.value)}
-                placeholder='What needs to be done?'
-                className='w-full px-4 py-3 bg-white dark:bg-zim-cream-800 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-zim-cream-900 dark:text-zim-cream-50 placeholder-zim-cream-400 dark:placeholder-zim-cream-500 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all'
-                autoFocus
-              />
+            <div className='space-y-4'>
+              <div>
+                <label
+                  htmlFor='task-input'
+                  className='block text-sm font-medium text-zim-cream-700 dark:text-zim-cream-300 mb-2 font-paragraph'
+                >
+                  Task Title *
+                </label>
+                <input
+                  id='task-input'
+                  type='text'
+                  value={taskTitle}
+                  onChange={(e) => setTaskTitle(e.target.value)}
+                  placeholder='What needs to be done?'
+                  className='w-full px-4 py-3 bg-white dark:bg-zim-cream-800 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-zim-cream-900 dark:text-zim-cream-50 placeholder-zim-cream-400 dark:placeholder-zim-cream-500 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all'
+                  autoFocus
+                  required
+                />
+              </div>
+              
+              <div>
+                <label
+                  htmlFor='task-description'
+                  className='block text-sm font-medium text-zim-cream-700 dark:text-zim-cream-300 mb-2 font-paragraph'
+                >
+                  Description
+                </label>
+                <textarea
+                  id='task-description'
+                  value={taskDescription}
+                  onChange={(e) => setTaskDescription(e.target.value)}
+                  placeholder='Add more details about this task...'
+                  rows={4}
+                  className='w-full px-4 py-3 bg-white dark:bg-zim-cream-800 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-zim-cream-900 dark:text-zim-cream-50 placeholder-zim-cream-400 dark:placeholder-zim-cream-500 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all resize-none'
+                />
+              </div>
             </div>
 
             {/* Actions */}
@@ -100,12 +124,9 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
               >
                 Cancel
               </button>
-              <button
-                type='submit'
-                className='px-4 py-2.5 bg-zim-green-500 hover:bg-zim-green-600 text-white rounded-lg font-buttons text-sm font-medium transition-colors shadow-sm hover:shadow-md'
-              >
+              <PrimaryButton type='submit'>
                 Add Task
-              </button>
+              </PrimaryButton>
             </div>
           </form>
         </div>

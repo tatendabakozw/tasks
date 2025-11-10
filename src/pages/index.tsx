@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import GeneralLayout from '@/layouts/general-layout'
-import { Plus, Check, Trash2, Circle } from 'lucide-react'
+import { Plus, Check, Trash2, Circle, CheckCircle2, Clock, TrendingUp } from 'lucide-react'
 import AddTaskModal from '@/components/modals/add-task-modal'
+import PrimaryButton from '@/components/buttons/primary-button'
 
 interface Task {
   id: string
   title: string
+  description: string
   completed: boolean
   createdAt: Date
 }
@@ -15,22 +17,25 @@ function index() {
     {
       id: '1',
       title: 'Complete project documentation',
+      description: 'Write comprehensive documentation for all project features and APIs',
       completed: false,
       createdAt: new Date(),
     },
     {
       id: '2',
       title: 'Review code changes',
+      description: 'Review pull requests and provide feedback to the team',
       completed: true,
       createdAt: new Date(),
     },
   ])
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const addTask = (title: string) => {
+  const addTask = (title: string, description: string) => {
     const newTask: Task = {
       id: Date.now().toString(),
       title,
+      description,
       completed: false,
       createdAt: new Date(),
     }
@@ -48,7 +53,9 @@ function index() {
   }
 
   const completedCount = tasks.filter(t => t.completed).length
+  const inProgressCount = tasks.filter(t => !t.completed).length
   const totalCount = tasks.length
+  const completionPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
   return (
     <GeneralLayout>
@@ -64,14 +71,75 @@ function index() {
                 {completedCount} of {totalCount} completed
               </p>
             </div>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className='flex items-center gap-2 px-4 py-2.5 bg-zim-green-500 hover:bg-zim-green-600 text-white rounded-lg font-buttons text-sm font-medium transition-colors shadow-sm hover:shadow-md'
-            >
-              <Plus className='h-4 w-4' />
+            <PrimaryButton onClick={() => setIsModalOpen(true)} icon={Plus}>
               Add Task
-            </button>
+            </PrimaryButton>
           </div>
+
+          {/* Summary Analytics */}
+          {totalCount > 0 && (
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mb-6'>
+              {/* Total Tasks */}
+              <div className='p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50'>
+                <div className='flex items-center gap-3 mb-2'>
+                  <div className='p-2 bg-zim-cream-100 dark:bg-zim-cream-800 rounded-lg'>
+                    <Circle className='h-4 w-4 text-zim-cream-600 dark:text-zim-cream-400' />
+                  </div>
+                  <span className='text-xs font-medium text-zim-cream-600 dark:text-zim-cream-400 font-badge uppercase tracking-wide'>
+                    Total
+                  </span>
+                </div>
+                <p className='text-2xl font-bold text-zim-cream-900 dark:text-zim-cream-50 font-heading'>
+                  {totalCount}
+                </p>
+              </div>
+
+              {/* Completed Tasks */}
+              <div className='p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50'>
+                <div className='flex items-center gap-3 mb-2'>
+                  <div className='p-2 bg-success-100 dark:bg-success-900/30 rounded-lg'>
+                    <CheckCircle2 className='h-4 w-4 text-success-600 dark:text-success-400' />
+                  </div>
+                  <span className='text-xs font-medium text-zim-cream-600 dark:text-zim-cream-400 font-badge uppercase tracking-wide'>
+                    Finished
+                  </span>
+                </div>
+                <p className='text-2xl font-bold text-success-600 dark:text-success-400 font-heading'>
+                  {completedCount}
+                </p>
+              </div>
+
+              {/* In Progress Tasks */}
+              <div className='p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50'>
+                <div className='flex items-center gap-3 mb-2'>
+                  <div className='p-2 bg-warning-100 dark:bg-warning-900/30 rounded-lg'>
+                    <Clock className='h-4 w-4 text-warning-600 dark:text-warning-400' />
+                  </div>
+                  <span className='text-xs font-medium text-zim-cream-600 dark:text-zim-cream-400 font-badge uppercase tracking-wide'>
+                    In Progress
+                  </span>
+                </div>
+                <p className='text-2xl font-bold text-warning-600 dark:text-warning-400 font-heading'>
+                  {inProgressCount}
+                </p>
+              </div>
+
+              {/* Completion Rate */}
+              <div className='p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50'>
+                <div className='flex items-center gap-3 mb-2'>
+                  <div className='p-2 bg-zim-green-100 dark:bg-zim-green-900/30 rounded-lg'>
+                    <TrendingUp className='h-4 w-4 text-zim-green-600 dark:text-zim-green-400' />
+                  </div>
+                  <span className='text-xs font-medium text-zim-cream-600 dark:text-zim-cream-400 font-badge uppercase tracking-wide'>
+                    Progress
+                  </span>
+                </div>
+                <p className='text-2xl font-bold text-zim-green-600 dark:text-zim-green-400 font-heading'>
+                  {completionPercentage}%
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tasks List */}
@@ -92,7 +160,7 @@ function index() {
             tasks.map((task) => (
               <div
                 key={task.id}
-                className='group flex items-center gap-3 p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50 hover:border-zim-green-300/50 dark:hover:border-zim-green-700/50 transition-all'
+                className='group flex items-start gap-3 p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50 hover:border-zim-green-300/50 dark:hover:border-zim-green-700/50 transition-all'
               >
                 {/* Checkbox */}
                 <button
@@ -108,10 +176,10 @@ function index() {
                   )}
                 </button>
 
-                {/* Task Title */}
+                {/* Task Content */}
                 <div className='flex-1 min-w-0'>
                   <p
-                    className={`font-paragraph ${
+                    className={`font-paragraph font-medium mb-1 ${
                       task.completed
                         ? 'text-zim-cream-500 dark:text-zim-cream-500 line-through'
                         : 'text-zim-cream-900 dark:text-zim-cream-50'
@@ -119,6 +187,17 @@ function index() {
                   >
                     {task.title}
                   </p>
+                  {task.description && (
+                    <p
+                      className={`text-sm font-paragraph ${
+                        task.completed
+                          ? 'text-zim-cream-400 dark:text-zim-cream-600 line-through'
+                          : 'text-zim-cream-600 dark:text-zim-cream-400'
+                      }`}
+                    >
+                      {task.description}
+                    </p>
+                  )}
                 </div>
 
                 {/* Delete Button */}
@@ -133,7 +212,7 @@ function index() {
             ))
           )}
         </div>
-      </div>
+    </div>
 
       {/* Add Task Modal */}
       <AddTaskModal
