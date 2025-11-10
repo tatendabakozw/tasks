@@ -48,6 +48,9 @@ export function useTasksQuery() {
   return useQuery({
     queryKey: taskKeys.lists(),
     queryFn: async () => {
+      // Add 2 second delay to show skeleton loaders
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+      
       const [tasksData, todosData] = await Promise.all([
         tasksApi.getAll(),
         todosApi.getAll(),
