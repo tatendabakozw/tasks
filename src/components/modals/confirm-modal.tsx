@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { AlertTriangle, X } from 'lucide-react'
 import PrimaryButton from '@/components/buttons/primary-button'
+import { useModal } from '@/hooks/use-modal'
 
 interface ConfirmModalProps {
   isOpen: boolean
@@ -25,17 +26,11 @@ export default function ConfirmModal({
   variant = 'danger',
   isLoading = false,
 }: ConfirmModalProps) {
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen && !isLoading) {
-        onClose()
-      }
-    }
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
-  }, [isOpen, isLoading, onClose])
+  const { modalRef } = useModal(isOpen, onClose, { preventClose: isLoading })
 
   if (!isOpen) return null
+
+  const modalTitleId = 'confirm-modal-title'
 
   const handleConfirm = () => {
     onConfirm()
@@ -67,21 +62,28 @@ export default function ConfirmModal({
       <div
         className='fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity'
         onClick={!isLoading ? onClose : undefined}
+        aria-hidden='true'
       />
 
       {/* Modal */}
-      <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+      <div
+        className='fixed inset-0 z-50 flex items-center justify-center p-4'
+        role='dialog'
+        aria-modal='true'
+        aria-labelledby={modalTitleId}
+      >
         <div
+          ref={modalRef}
           className='w-full max-w-md bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-xl transform transition-all'
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className='flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-800'>
             <div className='flex items-center gap-3'>
-              <div className={`p-2 rounded-lg ${styles.iconBg}`}>
+              <div className={`p-2 rounded-lg ${styles.iconBg}`} aria-hidden='true'>
                 <AlertTriangle className={`h-5 w-5 ${styles.icon}`} />
               </div>
-              <h2 className='text-xl font-semibold text-gray-900 dark:text-white font-heading'>
+              <h2 id={modalTitleId} className='text-xl font-semibold text-gray-900 dark:text-white font-heading'>
                 {title}
               </h2>
             </div>

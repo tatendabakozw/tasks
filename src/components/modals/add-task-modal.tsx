@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { X, AlertCircle } from 'lucide-react'
 import PrimaryButton from '@/components/buttons/primary-button'
 import { TaskStatus, TaskPriority } from '@/contexts/tasks-context'
 import SelectMenu from '@/components/menus/select-menu'
 import { useToast } from '@/contexts/toast-context'
+import { useModal } from '@/hooks/use-modal'
 
 interface AddTaskModalProps {
   isOpen: boolean
@@ -35,6 +36,8 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
   const [taskPriority, setTaskPriority] = React.useState<TaskPriority>('Medium')
   const [errors, setErrors] = React.useState<FormErrors>({})
   const [touched, setTouched] = React.useState<Record<string, boolean>>({})
+  const errorAnnouncementRef = useRef<HTMLDivElement>(null)
+  const { modalRef } = useModal(isOpen, onClose, { preventClose: isSubmitting })
 
   useEffect(() => {
     if (isOpen) {
@@ -46,14 +49,16 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
       setTaskPriority('Medium')
       setErrors({})
       setTouched({})
-      // Focus input when modal opens
-      const timer = setTimeout(() => {
-        const input = document.getElementById('task-input')
-        input?.focus()
-      }, 100)
-      return () => clearTimeout(timer)
     }
   }, [isOpen])
+
+  // Announce validation errors to screen readers
+  useEffect(() => {
+    if (errorAnnouncementRef.current && Object.keys(errors).length > 0) {
+      const errorMessages = Object.values(errors).filter(Boolean).join('. ')
+      errorAnnouncementRef.current.textContent = `Validation errors: ${errorMessages}`
+    }
+  }, [errors])
 
   const validateForm = (): { isValid: boolean; errors: FormErrors; firstError?: string } => {
     const newErrors: FormErrors = {}
@@ -105,15 +110,6 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
     setErrors(newErrors)
   }
 
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose()
-      }
-    }
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
-  }, [isOpen, onClose])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,6 +122,11 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
       // Show toast for validation errors
       if (validation.firstError) {
         showError('Validation Error', validation.firstError)
+      }
+      // Focus first error field
+      const firstErrorField = Object.keys(validation.errors)[0]
+      if (firstErrorField === 'title') {
+        document.getElementById('task-input')?.focus()
       }
       return
     }
@@ -159,28 +160,47 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
 
   if (!isOpen) return null
 
+  const modalTitleId = 'add-task-modal-title'
+
   return (
     <>
+      {/* ARIA live region for validation errors */}
+      <div
+        ref={errorAnnouncementRef}
+        role='alert'
+        aria-live='assertive'
+        aria-atomic='true'
+        className='sr-only'
+      />
+
       {/* Backdrop */}
       <div
         className='fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity'
-        onClick={onClose}
+        onClick={!isSubmitting ? onClose : undefined}
+        aria-hidden='true'
       />
 
       {/* Modal */}
-      <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+      <div
+        className='fixed inset-0 z-50 flex items-center justify-center p-4'
+        role='dialog'
+        aria-modal='true'
+        aria-labelledby={modalTitleId}
+      >
         <div
+          ref={modalRef}
           className='w-full max-w-md bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-xl transform transition-all'
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className='flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-800'>
-            <h2 className='text-xl font-semibold text-gray-900 dark:text-white font-heading'>
+            <h2 id={modalTitleId} className='text-xl font-semibold text-gray-900 dark:text-white font-heading'>
               Add New Task
             </h2>
             <button
               onClick={onClose}
-              className='p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-zinc-800'
+              disabled={isSubmitting}
+              className='p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed'
               aria-label='Close modal'
             >
               <X className='h-5 w-5' />
@@ -188,7 +208,7 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className='p-6'>
+          <form onSubmit={handleSubmit} className='p-6' noValidate>
             <div className='space-y-4'>
               <div>
                 <label
@@ -209,16 +229,22 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
                   }}
                   onBlur={() => handleBlur('title')}
                   placeholder='What needs to be done?'
+                  aria-required='true'
+                  aria-invalid={touched.title && !!errors.title}
+                  aria-describedby={touched.title && errors.title ? 'task-input-error' : undefined}
                   className={`w-full px-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none font-paragraph transition-all ${
                     touched.title && errors.title
                       ? 'border-red-500 dark:border-red-500 focus:ring-2 focus:ring-red-500/50 focus:border-red-500'
                       : 'border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50'
                   }`}
-                  autoFocus
                 />
                 {touched.title && errors.title && (
-                  <div className='mt-1.5 flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400 font-paragraph'>
-                    <AlertCircle className='h-4 w-4 flex-shrink-0' />
+                  <div
+                    id='task-input-error'
+                    role='alert'
+                    className='mt-1.5 flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400 font-paragraph'
+                  >
+                    <AlertCircle className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
                     <span>{errors.title}</span>
                   </div>
                 )}
@@ -270,8 +296,12 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
                   />
                 </div>
                 {touched.status && errors.status && (
-                  <div className='mt-1.5 flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400 font-paragraph'>
-                    <AlertCircle className='h-4 w-4 flex-shrink-0' />
+                  <div
+                    id='task-status-error'
+                    role='alert'
+                    className='mt-1.5 flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400 font-paragraph'
+                  >
+                    <AlertCircle className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
                     <span>{errors.status}</span>
                   </div>
                 )}
@@ -341,8 +371,12 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
                   />
                 </div>
                 {touched.priority && errors.priority && (
-                  <div className='mt-1.5 flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400 font-paragraph'>
-                    <AlertCircle className='h-4 w-4 flex-shrink-0' />
+                  <div
+                    id='task-priority-error'
+                    role='alert'
+                    className='mt-1.5 flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400 font-paragraph'
+                  >
+                    <AlertCircle className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
                     <span>{errors.priority}</span>
                   </div>
                 )}
@@ -350,11 +384,12 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
             </div>
 
             {/* Actions */}
-            <div className='flex items-center justify-end gap-3'>
+            <div className='flex items-center justify-end gap-3 mt-6'>
               <button
                 type='button'
                 onClick={onClose}
-                className='px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg font-buttons text-sm font-medium transition-colors'
+                disabled={isSubmitting}
+                className='px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg font-buttons text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
               >
                 Cancel
               </button>

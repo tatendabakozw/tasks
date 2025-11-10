@@ -60,9 +60,13 @@ export default function AddTodoForm({ onAdd, onCancel }: AddTodoFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className='bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 space-y-3'>
+    <form onSubmit={handleSubmit} className='bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 space-y-3' noValidate>
       <div>
+        <label htmlFor='todo-title-input' className='sr-only'>
+          Todo title
+        </label>
         <input
+          id='todo-title-input'
           type='text'
           value={title}
           onChange={(e) => {
@@ -74,6 +78,9 @@ export default function AddTodoForm({ onAdd, onCancel }: AddTodoFormProps) {
           onBlur={() => setTouched(true)}
           placeholder='Todo title...'
           disabled={isSubmitting}
+          aria-required='true'
+          aria-invalid={touched && !!error}
+          aria-describedby={touched && error ? 'todo-title-error' : undefined}
           className={`w-full px-3 py-2 bg-white dark:bg-zinc-800 border rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none font-paragraph disabled:opacity-50 disabled:cursor-not-allowed ${
             touched && error
               ? 'border-red-500 dark:border-red-500 focus:ring-2 focus:ring-red-500/50 focus:border-red-500'
@@ -82,8 +89,12 @@ export default function AddTodoForm({ onAdd, onCancel }: AddTodoFormProps) {
           autoFocus
         />
         {touched && error && (
-          <div className='mt-1.5 flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400 font-paragraph'>
-            <AlertCircle className='h-3.5 w-3.5 flex-shrink-0' />
+          <div
+            id='todo-title-error'
+            role='alert'
+            className='mt-1.5 flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400 font-paragraph'
+          >
+            <AlertCircle className='h-3.5 w-3.5 flex-shrink-0' aria-hidden='true' />
             <span>{error}</span>
           </div>
         )}
