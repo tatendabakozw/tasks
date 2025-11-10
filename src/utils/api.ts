@@ -34,6 +34,19 @@ export const tasksApi = {
       createdAt: string
     }>>('/tasks')
   },
+  getById: async (id: string) => {
+    return apiRequest<{
+      id: string
+      title: string
+      description: string
+      status: string
+      assignee: string
+      dueDate: string
+      priority: string
+      todos: any[]
+      createdAt: string
+    }>(`/tasks/${id}`)
+  },
   create: async (task: {
     title: string
     description: string
@@ -59,6 +72,34 @@ export const tasksApi = {
         todos: [],
         createdAt: new Date().toISOString(),
       }),
+    })
+  },
+  update: async (id: string, updates: {
+    title?: string
+    description?: string
+    status?: string
+    assignee?: string
+    dueDate?: string
+    priority?: string
+  }) => {
+    return apiRequest<{
+      id: string
+      title: string
+      description: string
+      status: string
+      assignee: string
+      dueDate: string
+      priority: string
+      todos: any[]
+      createdAt: string
+    }>(`/tasks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    })
+  },
+  delete: async (id: string) => {
+    return apiRequest<void>(`/tasks/${id}`, {
+      method: 'DELETE',
     })
   },
 }

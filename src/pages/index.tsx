@@ -504,12 +504,16 @@ function index() {
         <ConfirmModal
           isOpen={!!taskToDelete}
           onClose={() => setTaskToDelete(null)}
-          onConfirm={() => {
+          onConfirm={async () => {
             const task = tasks.find(t => t.id === taskToDelete)
-            deleteTask(taskToDelete)
-            setTaskToDelete(null)
-            if (task) {
-              success('Task deleted', `"${task.title}" has been removed`)
+            try {
+              await deleteTask(taskToDelete)
+              setTaskToDelete(null)
+              if (task) {
+                success('Task deleted', `"${task.title}" has been removed`)
+              }
+            } catch (err) {
+              error('Error', 'Failed to delete task')
             }
           }}
           title='Delete Task'

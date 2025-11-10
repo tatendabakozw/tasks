@@ -3,9 +3,11 @@ import { useRouter } from 'next/router'
 import GeneralLayout from '@/layouts/general-layout'
 import { ArrowLeft, Trash2, Calendar, User, AlertCircle, CheckCircle2, Clock, Circle, Edit2, Save, X } from 'lucide-react'
 import { useTasks, TaskStatus, TodoStatus, TaskPriority } from '@/contexts/tasks-context'
+import { useTaskQuery, useUpdateTask, useDeleteTask } from '@/hooks/use-tasks-query'
 import PrimaryButton from '@/components/buttons/primary-button'
 import { useToast } from '@/contexts/toast-context'
 import SelectMenu from '@/components/menus/select-menu'
+import TaskDetailSkeleton from '@/components/skeletons/task-detail-skeleton'
 import { format } from 'date-fns'
 import TodoCard from '@/components/todos/todo-card'
 import AddTodoForm from '@/components/todos/add-todo-form'
@@ -15,9 +17,8 @@ import ConfirmModal from '@/components/modals/confirm-modal'
 export default function TaskDetail() {
   const router = useRouter()
   const { id } = router.query
-  const { getTask, updateTask, deleteTask, addTodo, deleteTodo, moveTodo } = useTasks()
+  const { addTodo, deleteTodo, moveTodo } = useTasks()
   const { success, info, error: showError } = useToast()
-  const [isLoading, setIsLoading] = React.useState(true)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
@@ -27,8 +28,10 @@ export default function TaskDetail() {
   const [editedPriority, setEditedPriority] = useState<TaskPriority>('Medium')
   const [editedStatus, setEditedStatus] = useState<TaskStatus>('Todo')
 
-  // Get task early
-  const task = id && router.isReady ? getTask(id as string) : undefined
+  // Fetch task from API using React Query
+  const { data: task, isLoading, error } = useTaskQuery(id as string | undefined)
+  const updateTaskMutation = useUpdateTask()
+  const deleteTaskMutation = useDeleteTask()
 
   // Memoize todo counts to avoid recalculating in dependency array
   const todoStats = useMemo(() => {
@@ -46,19 +49,12 @@ export default function TaskDetail() {
   const progress = task ? calculateTaskProgress(task) : { percentage: 0, completed: 0, total: 0 }
   const suggestedStatus = task ? getSuggestedTaskStatus(task) : 'Todo'
 
-  // All hooks must be at the top, before any conditional returns
-  React.useEffect(() => {
-    if (router.isReady) {
-      setIsLoading(false)
-    }
-  }, [router.isReady])
-
   // Auto-update task status based on todos progress
   useEffect(() => {
     if (task && suggestedStatus !== task.status) {
       // Only auto-update if todos exist and status should change
       if (task.todos && task.todos.length > 0) {
-        updateTask(task.id, { status: suggestedStatus })
+        updateTaskMutation.mutate({ id: task.id, updates: { status: suggestedStatus } })
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,31 +72,26 @@ export default function TaskDetail() {
     }
   }, [isEditing, task])
 
-  // Now we can do conditional returns after all hooks
+  // Show loading skeleton
   if (isLoading || !router.isReady) {
     return (
       <GeneralLayout>
-        <div className='max-w-2xl mx-auto w-full'>
-          <div className='text-center py-12'>
-            <p className='text-gray-600 dark:text-gray-400 font-paragraph'>
-              Loading...
-            </p>
-          </div>
-        </div>
+        <TaskDetailSkeleton />
       </GeneralLayout>
     )
   }
 
-  if (!task) {
+  // Show error or not found
+  if (error || !task) {
     return (
       <GeneralLayout>
         <div className='max-w-2xl mx-auto w-full'>
           <div className='text-center py-12'>
             <h2 className='text-2xl font-bold text-gray-900 dark:text-white mb-2 font-heading'>
-              Task not found
+              {error ? 'Error loading task' : 'Task not found'}
             </h2>
             <p className='text-gray-600 dark:text-gray-400 font-paragraph mb-6'>
-              The task you're looking for doesn't exist.
+              {error ? 'Failed to load the task. Please try again.' : "The task you're looking for doesn't exist."}
             </p>
             <PrimaryButton onClick={() => router.push('/')} icon={ArrowLeft} iconPosition='left'>
               Back to Tasks
@@ -115,27 +106,43 @@ export default function TaskDetail() {
     if (isEditing) {
       setEditedStatus(newStatus)
     } else {
-      updateTask(task.id, { status: newStatus })
-      info('Status updated', `Task status changed to ${newStatus}`)
+      updateTaskMutation.mutate(
+        { id: task.id, updates: { status: newStatus } },
+        {
+          onSuccess: () => {
+            info('Status updated', `Task status changed to ${newStatus}`)
+          },
+          onError: () => {
+            showError('Error', 'Failed to update task status')
+          },
+        }
+      )
     }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editedTitle.trim()) {
       info('Validation Error', 'Task title is required')
       return
     }
 
-    updateTask(task.id, {
-      title: editedTitle.trim(),
-      description: editedDescription.trim(),
-      assignee: editedAssignee.trim(),
-      dueDate: editedDueDate || new Date().toISOString().split('T')[0],
-      priority: editedPriority,
-      status: editedStatus,
-    })
-    success('Task updated', 'Task has been saved successfully')
-    setIsEditing(false)
+    try {
+      await updateTaskMutation.mutateAsync({
+        id: task.id,
+        updates: {
+          title: editedTitle.trim(),
+          description: editedDescription.trim(),
+          assignee: editedAssignee.trim(),
+          dueDate: editedDueDate || new Date().toISOString().split('T')[0],
+          priority: editedPriority,
+          status: editedStatus,
+        },
+      })
+      success('Task updated', 'Task has been saved successfully')
+      setIsEditing(false)
+    } catch (error) {
+      showError('Error', 'Failed to update task')
+    }
   }
 
   const handleCancel = () => {
@@ -155,12 +162,16 @@ export default function TaskDetail() {
     setShowDeleteConfirm(true)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     const taskTitle = task.title
-    deleteTask(task.id)
-    setShowDeleteConfirm(false)
-    success('Task deleted', `"${taskTitle}" has been removed`)
-    router.push('/')
+    try {
+      await deleteTaskMutation.mutateAsync(task.id)
+      setShowDeleteConfirm(false)
+      success('Task deleted', `"${taskTitle}" has been removed`)
+      router.push('/')
+    } catch (error) {
+      showError('Error', 'Failed to delete task')
+    }
   }
 
   const handleAddTodo = async (title: string, description?: string) => {

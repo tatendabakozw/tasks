@@ -1,6 +1,5 @@
 import React, { createContext, useContext } from 'react'
-import { useTasksQuery, useCreateTask, useCreateTodo } from '@/hooks/use-tasks-query'
-import { todosApi, tasksApi } from '@/utils/api'
+import { useTasksQuery, useCreateTask, useCreateTodo, useUpdateTask, useDeleteTask } from '@/hooks/use-tasks-query'
 import { useQueryClient } from '@tanstack/react-query'
 import { taskKeys } from '@/hooks/use-tasks-query'
 
@@ -40,8 +39,8 @@ interface TasksContextType {
     dueDate: string
     priority: TaskPriority
   }) => Promise<void>
-  updateTask: (id: string, updates: Partial<Task>) => void
-  deleteTask: (id: string) => void
+  updateTask: (id: string, updates: Partial<Task>) => Promise<void>
+  deleteTask: (id: string) => Promise<void>
   getTask: (id: string) => Task | undefined
   addTodo: (taskId: string, title: string, description?: string) => Promise<void>
   updateTodo: (taskId: string, todoId: string, updates: Partial<TodoItem>) => void
@@ -56,6 +55,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const { data: tasks = [], isLoading } = useTasksQuery()
   const createTaskMutation = useCreateTask()
   const createTodoMutation = useCreateTodo()
+  const updateTaskMutation = useUpdateTask()
+  const deleteTaskMutation = useDeleteTask()
 
   const addTask = async ({
     title,
@@ -82,22 +83,12 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
-  const updateTask = (id: string, updates: Partial<Task>) => {
-    // Optimistic update with React Query
-    queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) => {
-      if (!old) return old
-      return old.map((task) => (task.id === id ? { ...task, ...updates } : task))
-    })
-    // TODO: Add API call for update when implemented
+  const updateTask = async (id: string, updates: Partial<Task>) => {
+    await updateTaskMutation.mutateAsync({ id, updates })
   }
 
-  const deleteTask = (id: string) => {
-    // Optimistic update with React Query
-    queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) => {
-      if (!old) return old
-      return old.filter((task) => task.id !== id)
-    })
-    // TODO: Add API call for delete when implemented
+  const deleteTask = async (id: string) => {
+    await deleteTaskMutation.mutateAsync(id)
   }
 
   const getTask = (id: string) => {

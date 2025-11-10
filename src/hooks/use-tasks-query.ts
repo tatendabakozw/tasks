@@ -91,6 +91,67 @@ export function useCreateTask() {
   })
 }
 
+// Hook to fetch a single task
+export function useTaskQuery(id: string | undefined) {
+  return useQuery({
+    queryKey: taskKeys.detail(id || ''),
+    queryFn: async () => {
+      if (!id) throw new Error('Task ID is required')
+      
+      // Add 2 second delay to show skeleton loaders
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+      
+      const [taskData, todosData] = await Promise.all([
+        tasksApi.getById(id),
+        todosApi.getAll(),
+      ])
+
+      return transformTask(taskData, todosData)
+    },
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
+
+// Hook to update a task
+export function useUpdateTask() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Task> }) => {
+      return tasksApi.update(id, {
+        title: updates.title,
+        description: updates.description,
+        status: updates.status,
+        assignee: updates.assignee,
+        dueDate: updates.dueDate,
+        priority: updates.priority,
+      })
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate both list and detail queries
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: taskKeys.detail(variables.id) })
+    },
+  })
+}
+
+// Hook to delete a task
+export function useDeleteTask() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      return tasksApi.delete(id)
+    },
+    onSuccess: (_, id) => {
+      // Invalidate list and remove detail from cache
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
+      queryClient.removeQueries({ queryKey: taskKeys.detail(id) })
+    },
+  })
+}
+
 // Hook to create a todo
 export function useCreateTodo() {
   const queryClient = useQueryClient()
@@ -108,9 +169,10 @@ export function useCreateTodo() {
         status: 'Pending',
       })
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       // Invalidate tasks to refetch with new todos
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: taskKeys.detail(variables.taskId) })
     },
   })
 }
