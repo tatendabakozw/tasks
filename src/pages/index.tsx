@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import GeneralLayout from '@/layouts/general-layout'
-import { Plus, Trash2, Circle, CheckCircle2, Clock, TrendingUp, User, Calendar, AlertCircle, Search, X, Filter, ArrowUpDown } from 'lucide-react'
+import { Plus, Trash2, Circle, CheckCircle2, Clock, TrendingUp, User, Calendar, AlertCircle, Search, X } from 'lucide-react'
 import AddTaskModal from '@/components/modals/add-task-modal'
 import ConfirmModal from '@/components/modals/confirm-modal'
 import PrimaryButton from '@/components/buttons/primary-button'
@@ -254,21 +254,21 @@ function index() {
 
         {/* Search and Filters */}
         {!isLoading && tasks.length > 0 && (
-          <div className='mb-6 space-y-4'>
+          <div className='mb-8'>
             {/* Search Bar */}
-            <div className='relative'>
-              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500' />
+            <div className='relative mb-4'>
+              <Search className='absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500' />
               <input
                 type='text'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder='Search tasks by title, description, or assignee...'
-                className='w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph'
+                placeholder='Search tasks...'
+                className='w-full pl-11 pr-11 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all'
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className='absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 rounded transition-colors'
+                  className='absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors'
                   aria-label='Clear search'
                 >
                   <X className='h-4 w-4' />
@@ -276,11 +276,10 @@ function index() {
               )}
             </div>
 
-            {/* Filters and Sort */}
-            <div className='flex flex-wrap items-center gap-3'>
-              {/* Status Filter */}
-              <div className='flex items-center gap-2'>
-                <Filter className='h-4 w-4 text-gray-500 dark:text-gray-400' />
+            {/* Filters and Sort Row */}
+            <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
+              {/* Filters Group */}
+              <div className='flex flex-wrap items-center gap-2'>
                 <SelectMenu
                   value={statusFilter}
                   onChange={setStatusFilter}
@@ -290,74 +289,69 @@ function index() {
                     { value: 'Doing', label: 'Doing' },
                     { value: 'Done', label: 'Done' },
                   ]}
-                  placeholder='Filter by status'
+                  placeholder='Status'
                   size='sm'
                   variant='compact'
-                  className='min-w-[140px]'
+                  className='min-w-[120px]'
                 />
-              </div>
 
-              {/* Assignee Filter */}
-              {uniqueAssignees.length > 0 && (
-                <SelectMenu
-                  value={assigneeFilter}
-                  onChange={setAssigneeFilter}
-                  options={[
-                    { value: 'all', label: 'All Assignees' },
-                    ...uniqueAssignees.map(assignee => ({
-                      value: assignee,
-                      label: assignee,
-                    })),
-                  ]}
-                  placeholder='Filter by assignee'
-                  size='sm'
-                  variant='compact'
-                  className='min-w-[160px]'
-                />
-              )}
+                {uniqueAssignees.length > 0 && (
+                  <SelectMenu
+                    value={assigneeFilter}
+                    onChange={setAssigneeFilter}
+                    options={[
+                      { value: 'all', label: 'All Assignees' },
+                      ...uniqueAssignees.map(assignee => ({
+                        value: assignee,
+                        label: assignee,
+                      })),
+                    ]}
+                    placeholder='Assignee'
+                    size='sm'
+                    variant='compact'
+                    className='min-w-[140px]'
+                  />
+                )}
 
-              {/* Sort */}
-              <div className='flex items-center gap-2 ml-auto'>
-                <ArrowUpDown className='h-4 w-4 text-gray-500 dark:text-gray-400' />
                 <SelectMenu
                   value={sortBy}
                   onChange={(value) => setSortBy(value as SortOption)}
                   options={[
-                    { value: 'none', label: 'No sorting' },
-                    { value: 'dueDate-asc', label: 'Due Date (Earliest)' },
-                    { value: 'dueDate-desc', label: 'Due Date (Latest)' },
-                    { value: 'priority-asc', label: 'Priority (Low to High)' },
-                    { value: 'priority-desc', label: 'Priority (High to Low)' },
+                    { value: 'none', label: 'Sort' },
+                    { value: 'dueDate-asc', label: 'Due Date ↑' },
+                    { value: 'dueDate-desc', label: 'Due Date ↓' },
+                    { value: 'priority-asc', label: 'Priority ↑' },
+                    { value: 'priority-desc', label: 'Priority ↓' },
                   ]}
-                  placeholder='Sort by...'
+                  placeholder='Sort'
                   size='sm'
                   variant='compact'
-                  className='min-w-[180px]'
+                  className='min-w-[120px]'
                 />
+
+                {/* Clear Filters */}
+                {(searchQuery || statusFilter !== 'all' || assigneeFilter !== 'all' || sortBy !== 'none') && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('')
+                      setStatusFilter('all')
+                      setAssigneeFilter('all')
+                      setSortBy('none')
+                    }}
+                    className='px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md transition-colors font-paragraph'
+                  >
+                    Reset
+                  </button>
+                )}
               </div>
 
-              {/* Clear Filters */}
-              {(searchQuery || statusFilter !== 'all' || assigneeFilter !== 'all' || sortBy !== 'none') && (
-                <button
-                  onClick={() => {
-                    setSearchQuery('')
-                    setStatusFilter('all')
-                    setAssigneeFilter('all')
-                    setSortBy('none')
-                  }}
-                  className='px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors font-paragraph'
-                >
-                  Clear all
-                </button>
+              {/* Results count */}
+              {filteredAndSortedTasks.length !== tasks.length && (
+                <p className='text-xs font-medium text-gray-500 dark:text-gray-500 font-paragraph'>
+                  {filteredAndSortedTasks.length} of {tasks.length} tasks
+                </p>
               )}
             </div>
-
-            {/* Results count */}
-            {filteredAndSortedTasks.length !== tasks.length && (
-              <p className='text-sm text-gray-600 dark:text-gray-400 font-paragraph'>
-                Showing {filteredAndSortedTasks.length} of {tasks.length} tasks
-              </p>
-            )}
           </div>
         )}
 
