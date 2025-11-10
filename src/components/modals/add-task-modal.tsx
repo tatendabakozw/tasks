@@ -15,7 +15,7 @@ interface AddTaskModalProps {
     assignee: string
     dueDate: string
     priority: TaskPriority
-  }) => void
+  }) => Promise<void>
 }
 
 interface FormErrors {
@@ -26,6 +26,7 @@ interface FormErrors {
 
 export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalProps) {
   const { success, error: showError } = useToast()
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [taskTitle, setTaskTitle] = React.useState('')
   const [taskDescription, setTaskDescription] = React.useState('')
   const [taskStatus, setTaskStatus] = React.useState<TaskStatus>('Todo')
@@ -114,7 +115,7 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
     return () => document.removeEventListener('keydown', handleEscape)
   }, [isOpen, onClose])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     // Mark all fields as touched
@@ -129,24 +130,31 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
       return
     }
 
-    onAdd({
-      title: taskTitle.trim(),
-      description: taskDescription.trim(),
-      status: taskStatus,
-      assignee: taskAssignee.trim(),
-      dueDate: taskDueDate || new Date().toISOString().split('T')[0],
-      priority: taskPriority,
-    })
-    success('Task created', `"${taskTitle.trim()}" has been added successfully`)
-    setTaskTitle('')
-    setTaskDescription('')
-    setTaskStatus('Todo')
-    setTaskAssignee('')
-    setTaskDueDate('')
-    setTaskPriority('Medium')
-    setErrors({})
-    setTouched({})
-    onClose()
+    setIsSubmitting(true)
+    try {
+      await onAdd({
+        title: taskTitle.trim(),
+        description: taskDescription.trim(),
+        status: taskStatus,
+        assignee: taskAssignee.trim(),
+        dueDate: taskDueDate || new Date().toISOString().split('T')[0],
+        priority: taskPriority,
+      })
+      success('Task created', `"${taskTitle.trim()}" has been added successfully`)
+      setTaskTitle('')
+      setTaskDescription('')
+      setTaskStatus('Todo')
+      setTaskAssignee('')
+      setTaskDueDate('')
+      setTaskPriority('Medium')
+      setErrors({})
+      setTouched({})
+      onClose()
+    } catch (error) {
+      showError('Error', 'Failed to create task. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (!isOpen) return null
@@ -350,8 +358,8 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
               >
                 Cancel
               </button>
-              <PrimaryButton type='submit'>
-                Add Task
+              <PrimaryButton type='submit' disabled={isSubmitting}>
+                {isSubmitting ? 'Adding...' : 'Add Task'}
               </PrimaryButton>
             </div>
           </form>

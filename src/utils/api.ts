@@ -19,6 +19,37 @@ export async function apiRequest<T>(
   return response.json()
 }
 
+// Helper functions for tasks
+export const tasksApi = {
+  create: async (task: {
+    title: string
+    description: string
+    status: string
+    assignee: string
+    dueDate: string
+    priority: string
+  }) => {
+    return apiRequest<{
+      id: string
+      title: string
+      description: string
+      status: string
+      assignee: string
+      dueDate: string
+      priority: string
+      todos: any[]
+      createdAt: string
+    }>('/tasks', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...task,
+        todos: [],
+        createdAt: new Date().toISOString(),
+      }),
+    })
+  },
+}
+
 // Helper functions for todos
 export const todosApi = {
   create: async (todo: {

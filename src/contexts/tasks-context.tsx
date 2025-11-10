@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { todosApi } from '@/utils/api'
+import { todosApi, tasksApi } from '@/utils/api'
 
 export type TaskStatus = 'Todo' | 'Doing' | 'Done'
 export type TaskPriority = 'Low' | 'Medium' | 'High'
@@ -35,7 +35,7 @@ interface TasksContextType {
     assignee: string
     dueDate: string
     priority: TaskPriority
-  }) => void
+  }) => Promise<void>
   updateTask: (id: string, updates: Partial<Task>) => void
   deleteTask: (id: string) => void
   getTask: (id: string) => Task | undefined
@@ -93,7 +93,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     }
   }, [tasks])
 
-  const addTask = ({
+  const addTask = async ({
     title,
     description,
     status,
@@ -108,18 +108,45 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     dueDate: string
     priority: TaskPriority
   }) => {
-    const newTask: Task = {
-      id: Date.now().toString(),
-      title,
-      description,
-      status,
-      assignee,
-      dueDate,
-      priority,
-      todos: [],
-      createdAt: new Date(),
+    try {
+      // Create task in JSON Server
+      const newTask = await tasksApi.create({
+        title,
+        description,
+        status,
+        assignee,
+        dueDate,
+        priority,
+      })
+
+      // Update local state with the task from server
+      const taskItem: Task = {
+        id: newTask.id,
+        title: newTask.title,
+        description: newTask.description,
+        status: newTask.status as TaskStatus,
+        assignee: newTask.assignee,
+        dueDate: newTask.dueDate,
+        priority: newTask.priority as TaskPriority,
+        todos: newTask.todos
+          ? newTask.todos.map((todo: any) => ({
+              id: todo.id,
+              taskId: todo.taskId,
+              title: todo.title,
+              description: todo.description,
+              status: todo.status as TodoStatus,
+              createdAt: new Date(todo.createdAt),
+            }))
+          : [],
+        createdAt: new Date(newTask.createdAt),
+      }
+
+      setTasks((prev) => [taskItem, ...prev])
+    } catch (error) {
+      console.error('Error adding task:', error)
+      // Re-throw so caller can handle it (show toast, etc.)
+      throw error
     }
-    setTasks((prev) => [newTask, ...prev])
   }
 
   const updateTask = (id: string, updates: Partial<Task>) => {

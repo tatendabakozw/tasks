@@ -1,5 +1,16 @@
 {
-  "tasks": [],
+  "tasks": [
+    {
+      "id": "48d9",
+      "title": "task 1",
+      "description": "please be nice to me",
+      "status": "Doing",
+      "assignee": "bako",
+      "dueDate": "2025-11-12",
+      "priority": "Medium",
+      "todos": [],
+      "createdAt": "2025-11-10T11:05:45.548Z"
+    }
+  ],
   "todos": []
 }
-
