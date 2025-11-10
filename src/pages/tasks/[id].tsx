@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 import GeneralLayout from '@/layouts/general-layout'
-import { ArrowLeft, Trash2, Calendar, User, AlertCircle, CheckCircle2, Clock, Circle } from 'lucide-react'
-import { useTasks, TaskStatus, TodoStatus } from '@/contexts/tasks-context'
+import { ArrowLeft, Trash2, Calendar, User, AlertCircle, CheckCircle2, Clock, Circle, Edit2, Save, X } from 'lucide-react'
+import { useTasks, TaskStatus, TodoStatus, TaskPriority } from '@/contexts/tasks-context'
 import PrimaryButton from '@/components/buttons/primary-button'
 import { useToast } from '@/contexts/toast-context'
+import SelectMenu from '@/components/menus/select-menu'
 import { format } from 'date-fns'
 import TodoCard from '@/components/todos/todo-card'
 import AddTodoForm from '@/components/todos/add-todo-form'
@@ -18,6 +19,13 @@ export default function TaskDetail() {
   const { success, info } = useToast()
   const [isLoading, setIsLoading] = React.useState(true)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedTitle, setEditedTitle] = useState('')
+  const [editedDescription, setEditedDescription] = useState('')
+  const [editedAssignee, setEditedAssignee] = useState('')
+  const [editedDueDate, setEditedDueDate] = useState('')
+  const [editedPriority, setEditedPriority] = useState<TaskPriority>('Medium')
+  const [editedStatus, setEditedStatus] = useState<TaskStatus>('Todo')
 
   // Get task early
   const task = id && router.isReady ? getTask(id as string) : undefined
@@ -56,6 +64,18 @@ export default function TaskDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task?.id, todoStats.total, todoStats.completed, todoStats.inProgress, suggestedStatus])
 
+  // Initialize edit form when entering edit mode
+  useEffect(() => {
+    if (isEditing && task) {
+      setEditedTitle(task.title)
+      setEditedDescription(task.description || '')
+      setEditedAssignee(task.assignee || '')
+      setEditedDueDate(task.dueDate ? task.dueDate.split('T')[0] : '')
+      setEditedPriority(task.priority)
+      setEditedStatus(task.status)
+    }
+  }, [isEditing, task])
+
   // Now we can do conditional returns after all hooks
   if (isLoading || !router.isReady) {
     return (
@@ -92,8 +112,43 @@ export default function TaskDetail() {
   }
 
   const handleStatusChange = (newStatus: TaskStatus) => {
-    updateTask(task.id, { status: newStatus })
-    info('Status updated', `Task status changed to ${newStatus}`)
+    if (isEditing) {
+      setEditedStatus(newStatus)
+    } else {
+      updateTask(task.id, { status: newStatus })
+      info('Status updated', `Task status changed to ${newStatus}`)
+    }
+  }
+
+  const handleSave = () => {
+    if (!editedTitle.trim()) {
+      info('Validation Error', 'Task title is required')
+      return
+    }
+
+    updateTask(task.id, {
+      title: editedTitle.trim(),
+      description: editedDescription.trim(),
+      assignee: editedAssignee.trim(),
+      dueDate: editedDueDate || new Date().toISOString().split('T')[0],
+      priority: editedPriority,
+      status: editedStatus,
+    })
+    success('Task updated', 'Task has been saved successfully')
+    setIsEditing(false)
+  }
+
+  const handleCancel = () => {
+    setIsEditing(false)
+    // Reset to original values
+    if (task) {
+      setEditedTitle(task.title)
+      setEditedDescription(task.description || '')
+      setEditedAssignee(task.assignee || '')
+      setEditedDueDate(task.dueDate ? task.dueDate.split('T')[0] : '')
+      setEditedPriority(task.priority)
+      setEditedStatus(task.status)
+    }
   }
 
   const handleDelete = () => {
@@ -174,15 +229,26 @@ export default function TaskDetail() {
           {/* Header */}
           <div className='flex items-start justify-between mb-6'>
             <div className='flex-1 min-w-0'>
-              <h1
+              {isEditing ? (
+                <input
+                  type='text'
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  className='w-full text-3xl font-bold mb-4 font-heading bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50'
+                  placeholder='Task title...'
+                  autoFocus
+                />
+              ) : (
+                <h1
                   className={`text-3xl font-bold mb-4 font-heading ${
                     task.status === 'Done'
                       ? 'text-gray-400 dark:text-gray-500 line-through'
                       : 'text-gray-900 dark:text-white'
                   }`}
-              >
-                {task.title}
-              </h1>
+                >
+                  {task.title}
+                </h1>
+              )}
               <div className='flex items-center gap-4 flex-wrap'>
                 <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-paragraph'>
                   <Calendar className='h-4 w-4' />
@@ -190,27 +256,98 @@ export default function TaskDetail() {
                 </div>
               </div>
             </div>
-            <button
-              onClick={handleDelete}
-              className='flex-shrink-0 p-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-zinc-800'
-              aria-label='Delete task'
-            >
-              <Trash2 className='h-5 w-5' />
-            </button>
+            <div className='flex items-center gap-2'>
+              {isEditing ? (
+                <>
+                  <button
+                    onClick={handleSave}
+                    className='flex-shrink-0 p-2 text-gray-400 dark:text-gray-500 hover:text-zim-green-600 dark:hover:text-zim-green-400 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-zinc-800'
+                    aria-label='Save changes'
+                  >
+                    <Save className='h-5 w-5' />
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className='flex-shrink-0 p-2 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-zinc-800'
+                    aria-label='Cancel editing'
+                  >
+                    <X className='h-5 w-5' />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className='flex-shrink-0 p-2 text-gray-400 dark:text-gray-500 hover:text-zim-green-600 dark:hover:text-zim-green-400 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-zinc-800'
+                    aria-label='Edit task'
+                  >
+                    <Edit2 className='h-5 w-5' />
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className='flex-shrink-0 p-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-zinc-800'
+                    aria-label='Delete task'
+                  >
+                    <Trash2 className='h-5 w-5' />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Status and Priority Badges */}
           <div className='flex items-center gap-3 mb-6 flex-wrap'>
-            <span
-              className={`px-3 py-1.5 rounded-full text-xs font-medium font-badge ${getStatusColor(task.status)}`}
-            >
-              {task.status}
-            </span>
-            <span
-              className={`px-3 py-1.5 rounded-full text-xs font-medium font-badge ${getPriorityColor(task.priority)}`}
-            >
-              {task.priority} Priority
-            </span>
+            {isEditing ? (
+              <>
+                <div className='flex items-center gap-2'>
+                  <label className='text-xs font-medium text-gray-600 dark:text-gray-400 font-badge'>
+                    Status:
+                  </label>
+                  <SelectMenu
+                    value={editedStatus}
+                    onChange={(value) => setEditedStatus(value as TaskStatus)}
+                    options={[
+                      { value: 'Todo', label: 'Todo' },
+                      { value: 'Doing', label: 'Doing' },
+                      { value: 'Done', label: 'Done' },
+                    ]}
+                    size='sm'
+                    variant='compact'
+                    className='min-w-[120px]'
+                  />
+                </div>
+                <div className='flex items-center gap-2'>
+                  <label className='text-xs font-medium text-gray-600 dark:text-gray-400 font-badge'>
+                    Priority:
+                  </label>
+                  <SelectMenu
+                    value={editedPriority}
+                    onChange={(value) => setEditedPriority(value as TaskPriority)}
+                    options={[
+                      { value: 'Low', label: 'Low' },
+                      { value: 'Medium', label: 'Medium' },
+                      { value: 'High', label: 'High' },
+                    ]}
+                    size='sm'
+                    variant='compact'
+                    className='min-w-[120px]'
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <span
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium font-badge ${getStatusColor(task.status)}`}
+                >
+                  {task.status}
+                </span>
+                <span
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium font-badge ${getPriorityColor(task.priority)}`}
+                >
+                  {task.priority} Priority
+                </span>
+              </>
+            )}
           </div>
 
           {/* Progress Bar */}
@@ -234,100 +371,133 @@ export default function TaskDetail() {
           )}
 
           {/* Description */}
-          {task.description && (
-            <div className='mb-6'>
-              <h2 className='text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 font-subheading uppercase tracking-wide'>
-                Description
-              </h2>
-              <p
-                className={`text-base font-paragraph leading-relaxed ${
-                  task.status === 'Done'
-                    ? 'text-gray-400 dark:text-gray-600 line-through'
-                    : 'text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                {task.description}
-              </p>
-            </div>
-          )}
+          <div className='mb-6'>
+            <h2 className='text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 font-subheading uppercase tracking-wide'>
+              Description
+            </h2>
+            {isEditing ? (
+              <textarea
+                value={editedDescription}
+                onChange={(e) => setEditedDescription(e.target.value)}
+                placeholder='Add a description...'
+                rows={6}
+                className='w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-base text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph resize-none leading-relaxed'
+              />
+            ) : (
+              task.description ? (
+                <p
+                  className={`text-base font-paragraph leading-relaxed ${
+                    task.status === 'Done'
+                      ? 'text-gray-400 dark:text-gray-600 line-through'
+                      : 'text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  {task.description}
+                </p>
+              ) : (
+                <p className='text-base font-paragraph text-gray-400 dark:text-gray-500 italic'>
+                  No description
+                </p>
+              )
+            )}
+          </div>
 
           {/* Task Details */}
           <div className='space-y-4 pt-6 border-t border-zinc-200 dark:border-zinc-800'>
-            {task.assignee && (
-              <div className='flex items-center gap-3'>
-                <User className='h-5 w-5 text-gray-600 dark:text-gray-400' />
-                <div>
-                  <p className='text-xs font-medium text-gray-600 dark:text-gray-400 font-badge uppercase tracking-wide mb-1'>
-                    Assignee
-                  </p>
+            {/* Assignee */}
+            <div className='flex items-center gap-3'>
+              <User className='h-5 w-5 text-gray-600 dark:text-gray-400' />
+              <div className='flex-1'>
+                <p className='text-xs font-medium text-gray-600 dark:text-gray-400 font-badge uppercase tracking-wide mb-1'>
+                  Assignee
+                </p>
+                {isEditing ? (
+                  <input
+                    type='text'
+                    value={editedAssignee}
+                    onChange={(e) => setEditedAssignee(e.target.value)}
+                    placeholder='Enter assignee name...'
+                    className='w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-base text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph'
+                  />
+                ) : (
                   <p className='text-base font-paragraph text-gray-900 dark:text-white'>
-                    {task.assignee}
+                    {task.assignee || 'Unassigned'}
                   </p>
-                </div>
+                )}
               </div>
-            )}
+            </div>
 
-            {formattedDueDate && (
-              <div className='flex items-center gap-3'>
-                <Calendar className={`h-5 w-5 ${isOverdue ? 'text-red-500 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`} />
-                <div>
-                  <p className='text-xs font-medium text-gray-600 dark:text-gray-400 font-badge uppercase tracking-wide mb-1'>
-                    Due Date
-                  </p>
+            {/* Due Date */}
+            <div className='flex items-center gap-3'>
+              <Calendar className={`h-5 w-5 ${isOverdue && !isEditing ? 'text-red-500 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`} />
+              <div className='flex-1'>
+                <p className='text-xs font-medium text-gray-600 dark:text-gray-400 font-badge uppercase tracking-wide mb-1'>
+                  Due Date
+                </p>
+                {isEditing ? (
+                  <input
+                    type='date'
+                    value={editedDueDate}
+                    onChange={(e) => setEditedDueDate(e.target.value)}
+                    className='w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-base text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph'
+                  />
+                ) : (
                   <div className='flex items-center gap-2'>
                     <p className={`text-base font-paragraph ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
-                      {formattedDueDate}
+                      {formattedDueDate || 'No due date'}
                     </p>
-                    {isOverdue && (
+                    {isOverdue && !isEditing && (
                       <AlertCircle className='h-4 w-4 text-red-500 dark:text-red-400' />
                     )}
                   </div>
-                </div>
+                )}
               </div>
-            )}
-          </div>
-
-          {/* Status Change Actions */}
-          <div className='mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800'>
-            <p className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 font-subheading'>
-              Change Status
-            </p>
-            <div className='flex items-center gap-2 flex-wrap'>
-              <button
-                onClick={() => handleStatusChange('Todo')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium font-buttons transition-colors ${
-                  task.status === 'Todo'
-                    ? 'bg-gray-200 dark:bg-zinc-700 text-gray-900 dark:text-white'
-                    : 'bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-700'
-                }`}
-              >
-                <Circle className='h-4 w-4 inline mr-2' />
-                Todo
-              </button>
-              <button
-                onClick={() => handleStatusChange('Doing')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium font-buttons transition-colors ${
-                  task.status === 'Doing'
-                    ? 'bg-amber-200 dark:bg-amber-700 text-amber-900 dark:text-amber-50'
-                    : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-700'
-                }`}
-              >
-                <Clock className='h-4 w-4 inline mr-2' />
-                Doing
-              </button>
-              <button
-                onClick={() => handleStatusChange('Done')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium font-buttons transition-colors ${
-                  task.status === 'Done'
-                    ? 'bg-emerald-200 dark:bg-emerald-700 text-emerald-900 dark:text-emerald-50'
-                    : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-700'
-                }`}
-              >
-                <CheckCircle2 className='h-4 w-4 inline mr-2' />
-                Done
-              </button>
             </div>
           </div>
+
+          {/* Status Change Actions - Only show when not editing */}
+          {!isEditing && (
+            <div className='mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800'>
+              <p className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 font-subheading'>
+                Change Status
+              </p>
+              <div className='flex items-center gap-2 flex-wrap'>
+                <button
+                  onClick={() => handleStatusChange('Todo')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium font-buttons transition-colors ${
+                    task.status === 'Todo'
+                      ? 'bg-gray-200 dark:bg-zinc-700 text-gray-900 dark:text-white'
+                      : 'bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  <Circle className='h-4 w-4 inline mr-2' />
+                  Todo
+                </button>
+                <button
+                  onClick={() => handleStatusChange('Doing')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium font-buttons transition-colors ${
+                    task.status === 'Doing'
+                      ? 'bg-amber-200 dark:bg-amber-700 text-amber-900 dark:text-amber-50'
+                      : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-700'
+                  }`}
+                >
+                  <Clock className='h-4 w-4 inline mr-2' />
+                  Doing
+                </button>
+                <button
+                  onClick={() => handleStatusChange('Done')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium font-buttons transition-colors ${
+                    task.status === 'Done'
+                      ? 'bg-emerald-200 dark:bg-emerald-700 text-emerald-900 dark:text-emerald-50'
+                      : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-700'
+                  }`}
+                >
+                  <CheckCircle2 className='h-4 w-4 inline mr-2' />
+                  Done
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Todos Kanban Board */}
