@@ -21,6 +21,19 @@ export async function apiRequest<T>(
 
 // Helper functions for tasks
 export const tasksApi = {
+  getAll: async () => {
+    return apiRequest<Array<{
+      id: string
+      title: string
+      description: string
+      status: string
+      assignee: string
+      dueDate: string
+      priority: string
+      todos: any[]
+      createdAt: string
+    }>>('/tasks')
+  },
   create: async (task: {
     title: string
     description: string
@@ -52,6 +65,16 @@ export const tasksApi = {
 
 // Helper functions for todos
 export const todosApi = {
+  getAll: async () => {
+    return apiRequest<Array<{
+      id: string
+      taskId: string
+      title: string
+      description?: string
+      status: string
+      createdAt: string
+    }>>('/todos')
+  },
   create: async (todo: {
     taskId: string
     title: string

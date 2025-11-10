@@ -28,6 +28,7 @@ export interface Task {
 
 interface TasksContextType {
   tasks: Task[]
+  isLoading: boolean
   addTask: (task: {
     title: string
     description: string
@@ -49,49 +50,79 @@ const TasksContext = createContext<TasksContextType | undefined>(undefined)
 
 export function TasksProvider({ children }: { children: React.ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Load tasks from localStorage on mount
+  // Load tasks and todos from JSON Server on mount
   useEffect(() => {
-    const stored = localStorage.getItem('tasks')
-    if (stored) {
+    const loadTasks = async () => {
       try {
-        const parsed = JSON.parse(stored)
-        // Convert createdAt strings back to Date objects and migrate old format
-        const tasksWithDates = parsed.map((task: any) => {
-          // Migrate old tasks with 'completed' field to new 'status' field
-          if (task.completed !== undefined && !task.status) {
-            task.status = task.completed ? 'Done' : 'Todo'
-            delete task.completed
-          }
-          // Set defaults for new fields if missing
+        setIsLoading(true)
+        // Fetch tasks and todos in parallel
+        const [tasksData, todosData] = await Promise.all([
+          tasksApi.getAll(),
+          todosApi.getAll(),
+        ])
+
+        // Combine todos with their tasks
+        const tasksWithTodos = tasksData.map((task: any) => {
+          const taskTodos = todosData
+            .filter((todo: any) => todo.taskId === task.id)
+            .map((todo: any) => ({
+              id: todo.id,
+              taskId: todo.taskId,
+              title: todo.title,
+              description: todo.description,
+              status: todo.status as TodoStatus,
+              createdAt: new Date(todo.createdAt),
+            }))
+
           return {
-            ...task,
-            status: task.status || 'Todo',
+            id: task.id,
+            title: task.title,
+            description: task.description,
+            status: task.status as TaskStatus,
             assignee: task.assignee || '',
             dueDate: task.dueDate || '',
-            priority: task.priority || 'Medium',
-            todos: task.todos
-              ? task.todos.map((todo: any) => ({
-                  ...todo,
-                  createdAt: new Date(todo.createdAt),
-                }))
-              : [],
+            priority: task.priority as TaskPriority,
+            todos: taskTodos,
             createdAt: new Date(task.createdAt),
           }
         })
-        setTasks(tasksWithDates)
-      } catch (e) {
-        console.error('Error loading tasks:', e)
+
+        setTasks(tasksWithTodos)
+      } catch (error) {
+        console.error('Error loading tasks:', error)
+        // Fallback to localStorage if API fails
+        const stored = localStorage.getItem('tasks')
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored)
+            const tasksWithDates = parsed.map((task: any) => ({
+              ...task,
+              status: task.status || 'Todo',
+              assignee: task.assignee || '',
+              dueDate: task.dueDate || '',
+              priority: task.priority || 'Medium',
+              todos: task.todos
+                ? task.todos.map((todo: any) => ({
+                    ...todo,
+                    createdAt: new Date(todo.createdAt),
+                  }))
+                : [],
+              createdAt: new Date(task.createdAt),
+            }))
+            setTasks(tasksWithDates)
+          } catch (e) {
+            console.error('Error loading from localStorage:', e)
+          }
+        }
+      } finally {
+        setIsLoading(false)
       }
     }
-  }, [])
 
-  // Save tasks to localStorage whenever they change
-  useEffect(() => {
-    if (tasks.length > 0 || localStorage.getItem('tasks')) {
-      localStorage.setItem('tasks', JSON.stringify(tasks))
-    }
-  }, [tasks])
+    loadTasks()
+  }, [])
 
   const addTask = async ({
     title,
@@ -233,6 +264,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     <TasksContext.Provider
       value={{
         tasks,
+        isLoading,
         addTask,
         updateTask,
         deleteTask,

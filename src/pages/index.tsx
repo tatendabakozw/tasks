@@ -6,6 +6,8 @@ import AddTaskModal from '@/components/modals/add-task-modal'
 import ConfirmModal from '@/components/modals/confirm-modal'
 import PrimaryButton from '@/components/buttons/primary-button'
 import SelectMenu from '@/components/menus/select-menu'
+import TaskCardSkeleton from '@/components/skeletons/task-card-skeleton'
+import AnalyticsSkeleton from '@/components/skeletons/analytics-skeleton'
 import { useTasks, TaskStatus, TaskPriority } from '@/contexts/tasks-context'
 import { useToast } from '@/contexts/toast-context'
 import { format } from 'date-fns'
@@ -15,7 +17,7 @@ type SortOption = 'dueDate-asc' | 'dueDate-desc' | 'priority-asc' | 'priority-de
 
 function index() {
   const router = useRouter()
-  const { tasks, addTask, updateTask, deleteTask } = useTasks()
+  const { tasks, isLoading, addTask, updateTask, deleteTask } = useTasks()
   const { success, error } = useToast()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null)
@@ -168,7 +170,9 @@ function index() {
           </div>
 
           {/* Summary Analytics */}
-          {totalCount > 0 && (
+          {isLoading ? (
+            <AnalyticsSkeleton />
+          ) : totalCount > 0 ? (
             <div className='grid grid-cols-2 md:grid-cols-5 gap-4 mb-6'>
               {/* Total Tasks */}
               <div className='p-4 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800'>
@@ -245,11 +249,11 @@ function index() {
                 </p>
               </div>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Search and Filters */}
-        {tasks.length > 0 && (
+        {!isLoading && tasks.length > 0 && (
           <div className='mb-6 space-y-4'>
             {/* Search Bar */}
             <div className='relative'>
@@ -359,7 +363,14 @@ function index() {
 
         {/* Tasks Grid */}
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-          {filteredAndSortedTasks.length === 0 ? (
+          {isLoading ? (
+            // Show skeleton loaders
+            <>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <TaskCardSkeleton key={i} />
+              ))}
+            </>
+          ) : filteredAndSortedTasks.length === 0 ? (
             <div className='col-span-full text-center py-12 px-4'>
               <div className='inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-800 mb-4'>
                 <Circle className='h-8 w-8 text-gray-400 dark:text-gray-500' />
