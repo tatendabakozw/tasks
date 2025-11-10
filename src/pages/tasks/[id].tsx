@@ -16,7 +16,7 @@ export default function TaskDetail() {
   const router = useRouter()
   const { id } = router.query
   const { getTask, updateTask, deleteTask, addTodo, deleteTodo, moveTodo } = useTasks()
-  const { success, info } = useToast()
+  const { success, info, error: showError } = useToast()
   const [isLoading, setIsLoading] = React.useState(true)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -163,9 +163,13 @@ export default function TaskDetail() {
     router.push('/')
   }
 
-  const handleAddTodo = (title: string, description?: string) => {
-    addTodo(task.id, title, description)
-    success('Todo added', `"${title}" has been added`)
+  const handleAddTodo = async (title: string, description?: string) => {
+    try {
+      await addTodo(task.id, title, description)
+      success('Todo added', `"${title}" has been added`)
+    } catch (error) {
+      showError('Error', 'Failed to add todo. Please try again.')
+    }
   }
 
   const handleDeleteTodo = (todoId: string) => {

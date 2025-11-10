@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { todosApi } from '@/utils/api'
 
 export type TaskStatus = 'Todo' | 'Doing' | 'Done'
 export type TaskPriority = 'Low' | 'Medium' | 'High'
@@ -6,10 +7,11 @@ export type TodoStatus = 'Pending' | 'Todo' | 'In Progress' | 'Complete'
 
 export interface TodoItem {
   id: string
+  taskId?: string // Optional for backward compatibility, but required for JSON Server
   title: string
   description?: string
   status: TodoStatus
-  createdAt: Date
+  createdAt: Date | string // Can be Date or ISO string from API
 }
 
 export interface Task {
@@ -37,7 +39,7 @@ interface TasksContextType {
   updateTask: (id: string, updates: Partial<Task>) => void
   deleteTask: (id: string) => void
   getTask: (id: string) => Task | undefined
-  addTodo: (taskId: string, title: string, description?: string) => void
+  addTodo: (taskId: string, title: string, description?: string) => Promise<void>
   updateTodo: (taskId: string, todoId: string, updates: Partial<TodoItem>) => void
   deleteTodo: (taskId: string, todoId: string) => void
   moveTodo: (taskId: string, todoId: string, newStatus: TodoStatus) => void
@@ -134,21 +136,38 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     return tasks.find((task) => task.id === id)
   }
 
-  const addTodo = (taskId: string, title: string, description?: string) => {
-    const newTodo: TodoItem = {
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      title,
-      description,
-      status: 'Pending',
-      createdAt: new Date(),
-    }
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId
-          ? { ...task, todos: [...(task.todos || []), newTodo] }
-          : task
+  const addTodo = async (taskId: string, title: string, description?: string) => {
+    try {
+      // Create todo in JSON Server
+      const newTodo = await todosApi.create({
+        taskId,
+        title,
+        description,
+        status: 'Pending',
+      })
+
+      // Update local state with the todo from server
+      const todoItem: TodoItem = {
+        id: newTodo.id,
+        taskId: newTodo.taskId,
+        title: newTodo.title,
+        description: newTodo.description,
+        status: newTodo.status as TodoStatus,
+        createdAt: new Date(newTodo.createdAt),
+      }
+
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === taskId
+            ? { ...task, todos: [...(task.todos || []), todoItem] }
+            : task
+        )
       )
-    )
+    } catch (error) {
+      console.error('Error adding todo:', error)
+      // Re-throw so caller can handle it (show toast, etc.)
+      throw error
+    }
   }
 
   const updateTodo = (taskId: string, todoId: string, updates: Partial<TodoItem>) => {
