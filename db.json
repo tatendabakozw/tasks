@@ -1,21 +1,4 @@
 {
   "tasks": [],
-  "todos": [
-    {
-      "id": "a3d4",
-      "taskId": null,
-      "title": "fghg",
-      "description": "jnmj",
-      "status": "Pending",
-      "createdAt": "2025-11-10T12:17:40.393Z"
-    },
-    {
-      "id": "55a3",
-      "taskId": null,
-      "title": "fgf",
-      "description": "hjh",
-      "status": "Pending",
-      "createdAt": "2025-11-10T12:18:08.744Z"
-    }
-  ]
+  "todos": []
 }
