@@ -2,8 +2,6 @@
 
 A modern, full-featured task management application built with Next.js, featuring a beautiful UI, dark mode support, and real-time task tracking with subtodos.
 
-> **⚠️ Setup Note**: This app requires **two servers** to run - JSON Server (backend) and Next.js (frontend). See [Running the Application](#running-the-application) for details.
-
 ![Next.js](https://img.shields.io/badge/Next.js-16.0-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38bdf8?style=flat-square&logo=tailwind-css)
@@ -26,8 +24,7 @@ A modern, full-featured task management application built with Next.js, featurin
 
 ### Prerequisites
 
-- **Node.js 18+** and npm (or yarn/pnpm)
-- **Two terminal windows** (one for JSON Server, one for Next.js)
+- Node.js 18+ and npm (or yarn/pnpm)
 - Git
 
 ### Installation
@@ -51,43 +48,53 @@ pnpm install
 
 ### Running the Application
 
-⚠️ **Important**: This application requires **TWO servers** to run simultaneously:
+> **⚠️ Important**: This application requires **two servers** to run simultaneously. Make sure both are running before using the app.
 
-#### Step 1: Start JSON Server (Backend API)
+#### Step 1: Start the JSON Server
 
-Open your first terminal window and run:
+The JSON Server provides the backend API for data persistence. Open a terminal window and run:
 
 ```bash
 npm run server
 ```
 
 This will:
-- Start JSON Server on `http://localhost:3001`
+- Start the JSON Server on `http://localhost:3001`
 - Watch the `db.json` file for changes
 - Provide REST API endpoints for tasks and todos
 
-**Keep this terminal running** - the server must stay active while using the app.
+**Keep this terminal window open** while developing.
 
-#### Step 2: Start Next.js Development Server (Frontend)
+#### Step 2: Start the Next.js Development Server
 
-Open a **second terminal window** and run:
+Open a **new terminal window** (keep the JSON Server running in the first one) and run:
 
 ```bash
 npm run dev
 ```
 
 This will:
-- Start the Next.js development server on `http://localhost:3000`
-- Enable hot module replacement for development
-- Connect to the JSON Server API
+- Start the Next.js development server
+- Make the application available at [http://localhost:3000](http://localhost:3000)
+- Enable hot-reload for development
 
-#### Step 3: Open the Application
+#### Quick Start (Both Servers)
 
-Once both servers are running, open your browser and navigate to:
+If you want to run both servers at once, you can use two terminal windows:
 
-**http://localhost:3000**
+**Terminal 1:**
+```bash
+npm run server
+```
 
-> **Note**: Make sure both terminals are running. If you close the JSON Server terminal, the application won't be able to save or load data.
+**Terminal 2:**
+```bash
+npm run dev
+```
+
+Then open [http://localhost:3000](http://localhost:3000) in your browser.
+
+> **Note**: The JSON Server must be running on port 3001 for the application to work properly. If port 3001 is already in use, you can modify the port in the `package.json` script or stop the conflicting service.
 
 ### Building for Production
 
