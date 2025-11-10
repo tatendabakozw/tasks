@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import PrimaryButton from '@/components/buttons/primary-button'
 import { TaskStatus, TaskPriority } from '@/contexts/tasks-context'
 import SelectMenu from '@/components/menus/select-menu'
+import { useToast } from '@/contexts/toast-context'
 
 interface AddTaskModalProps {
   isOpen: boolean
@@ -18,6 +19,7 @@ interface AddTaskModalProps {
 }
 
 export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalProps) {
+  const { success } = useToast()
   const [taskTitle, setTaskTitle] = React.useState('')
   const [taskDescription, setTaskDescription] = React.useState('')
   const [taskStatus, setTaskStatus] = React.useState<TaskStatus>('Todo')
@@ -63,6 +65,7 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
         dueDate: taskDueDate || new Date().toISOString().split('T')[0],
         priority: taskPriority,
       })
+      success('Task created', `"${taskTitle.trim()}" has been added successfully`)
       setTaskTitle('')
       setTaskDescription('')
       setTaskStatus('Todo')

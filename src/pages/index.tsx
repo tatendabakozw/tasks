@@ -7,6 +7,7 @@ import ConfirmModal from '@/components/modals/confirm-modal'
 import PrimaryButton from '@/components/buttons/primary-button'
 import SelectMenu from '@/components/menus/select-menu'
 import { useTasks, TaskStatus, TaskPriority } from '@/contexts/tasks-context'
+import { useToast } from '@/contexts/toast-context'
 import { format } from 'date-fns'
 import { calculateTaskProgress } from '@/utils/task-progress'
 
@@ -15,6 +16,7 @@ type SortOption = 'dueDate-asc' | 'dueDate-desc' | 'priority-asc' | 'priority-de
 function index() {
   const router = useRouter()
   const { tasks, addTask, updateTask, deleteTask } = useTasks()
+  const { success, error } = useToast()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -492,8 +494,12 @@ function index() {
           isOpen={!!taskToDelete}
           onClose={() => setTaskToDelete(null)}
           onConfirm={() => {
+            const task = tasks.find(t => t.id === taskToDelete)
             deleteTask(taskToDelete)
             setTaskToDelete(null)
+            if (task) {
+              success('Task deleted', `"${task.title}" has been removed`)
+            }
           }}
           title='Delete Task'
           message={`Are you sure you want to delete "${tasks.find(t => t.id === taskToDelete)?.title}"? This action cannot be undone.`}

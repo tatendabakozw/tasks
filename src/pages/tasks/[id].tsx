@@ -4,6 +4,7 @@ import GeneralLayout from '@/layouts/general-layout'
 import { ArrowLeft, Trash2, Calendar, User, AlertCircle, CheckCircle2, Clock, Circle } from 'lucide-react'
 import { useTasks, TaskStatus, TodoStatus } from '@/contexts/tasks-context'
 import PrimaryButton from '@/components/buttons/primary-button'
+import { useToast } from '@/contexts/toast-context'
 import { format } from 'date-fns'
 import TodoCard from '@/components/todos/todo-card'
 import AddTodoForm from '@/components/todos/add-todo-form'
@@ -14,6 +15,7 @@ export default function TaskDetail() {
   const router = useRouter()
   const { id } = router.query
   const { getTask, updateTask, deleteTask, addTodo, deleteTodo, moveTodo } = useTasks()
+  const { success, info } = useToast()
   const [isLoading, setIsLoading] = React.useState(true)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
@@ -91,6 +93,7 @@ export default function TaskDetail() {
 
   const handleStatusChange = (newStatus: TaskStatus) => {
     updateTask(task.id, { status: newStatus })
+    info('Status updated', `Task status changed to ${newStatus}`)
   }
 
   const handleDelete = () => {
@@ -98,9 +101,32 @@ export default function TaskDetail() {
   }
 
   const confirmDelete = () => {
+    const taskTitle = task.title
     deleteTask(task.id)
     setShowDeleteConfirm(false)
+    success('Task deleted', `"${taskTitle}" has been removed`)
     router.push('/')
+  }
+
+  const handleAddTodo = (title: string, description?: string) => {
+    addTodo(task.id, title, description)
+    success('Todo added', `"${title}" has been added`)
+  }
+
+  const handleDeleteTodo = (todoId: string) => {
+    const todo = task.todos?.find(t => t.id === todoId)
+    deleteTodo(task.id, todoId)
+    if (todo) {
+      success('Todo deleted', `"${todo.title}" has been removed`)
+    }
+  }
+
+  const handleMoveTodo = (todoId: string, newStatus: TodoStatus) => {
+    const todo = task.todos?.find(t => t.id === todoId)
+    moveTodo(task.id, todoId, newStatus)
+    if (todo) {
+      info('Todo updated', `"${todo.title}" moved to ${newStatus}`)
+    }
   }
 
   const formattedCreatedDate = format(new Date(task.createdAt), 'PPP')
@@ -330,12 +356,12 @@ export default function TaskDetail() {
                     <TodoCard
                       key={todo.id}
                       todo={todo}
-                      onDelete={() => deleteTodo(task.id, todo.id)}
-                      onStatusChange={(newStatus) => moveTodo(task.id, todo.id, newStatus)}
+                      onDelete={() => handleDeleteTodo(todo.id)}
+                      onStatusChange={(newStatus) => handleMoveTodo(todo.id, newStatus)}
                     />
                   ))}
                 <AddTodoForm
-                  onAdd={(title, description) => addTodo(task.id, title, description)}
+                  onAdd={handleAddTodo}
                 />
               </div>
             </div>
@@ -357,8 +383,8 @@ export default function TaskDetail() {
                     <TodoCard
                       key={todo.id}
                       todo={todo}
-                      onDelete={() => deleteTodo(task.id, todo.id)}
-                      onStatusChange={(newStatus) => moveTodo(task.id, todo.id, newStatus)}
+                      onDelete={() => handleDeleteTodo(todo.id)}
+                      onStatusChange={(newStatus) => handleMoveTodo(todo.id, newStatus)}
                     />
                   ))}
               </div>
@@ -381,8 +407,8 @@ export default function TaskDetail() {
                     <TodoCard
                       key={todo.id}
                       todo={todo}
-                      onDelete={() => deleteTodo(task.id, todo.id)}
-                      onStatusChange={(newStatus) => moveTodo(task.id, todo.id, newStatus)}
+                      onDelete={() => handleDeleteTodo(todo.id)}
+                      onStatusChange={(newStatus) => handleMoveTodo(todo.id, newStatus)}
                     />
                   ))}
               </div>
@@ -405,8 +431,8 @@ export default function TaskDetail() {
                     <TodoCard
                       key={todo.id}
                       todo={todo}
-                      onDelete={() => deleteTodo(task.id, todo.id)}
-                      onStatusChange={(newStatus) => moveTodo(task.id, todo.id, newStatus)}
+                      onDelete={() => handleDeleteTodo(todo.id)}
+                      onStatusChange={(newStatus) => handleMoveTodo(todo.id, newStatus)}
                     />
                   ))}
               </div>

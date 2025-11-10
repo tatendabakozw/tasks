@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import { Inter } from "next/font/google";
 import { ThemeProvider as ThemeWrapper } from "@/contexts/theme-context";
 import { TasksProvider } from "@/contexts/tasks-context";
+import { ToastProvider } from "@/contexts/toast-context";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -16,9 +17,11 @@ export default function App({ Component, pageProps }: AppProps) {
     <ThemeProvider attribute="class">
       <ThemeWrapper>
         <TasksProvider>
-          <div className={inter.variable}>
-            <Component {...pageProps} />
-          </div>
+          <ToastProvider>
+            <div className={inter.variable}>
+              <Component {...pageProps} />
+            </div>
+          </ToastProvider>
         </TasksProvider>
       </ThemeWrapper>
     </ThemeProvider>
