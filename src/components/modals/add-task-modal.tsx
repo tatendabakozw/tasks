@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { X } from 'lucide-react'
 import PrimaryButton from '@/components/buttons/primary-button'
 import { TaskStatus, TaskPriority } from '@/contexts/tasks-context'
+import SelectMenu from '@/components/menus/select-menu'
 
 interface AddTaskModalProps {
   isOpen: boolean
@@ -137,7 +138,7 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
                   onChange={(e) => setTaskDescription(e.target.value)}
                   placeholder='Add more details about this task...'
                   rows={4}
-                  className='w-full px-4 py-3 bg-white dark:bg-zim-cream-800 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-zim-cream-900 dark:text-zim-cream-50 placeholder-zim-cream-400 dark:placeholder-zim-cream-500 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all resize-none'
+                  className='w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all resize-none'
                 />
               </div>
 
@@ -149,17 +150,16 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
                 >
                   Status *
                 </label>
-                <select
-                  id='task-status'
+                <SelectMenu
                   value={taskStatus}
-                  onChange={(e) => setTaskStatus(e.target.value as TaskStatus)}
-                  className='w-full px-4 py-3 bg-white dark:bg-zim-cream-800 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-zim-cream-900 dark:text-zim-cream-50 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all'
-                  required
-                >
-                  <option value='Todo'>Todo</option>
-                  <option value='Doing'>Doing</option>
-                  <option value='Done'>Done</option>
-                </select>
+                  onChange={(value) => setTaskStatus(value as TaskStatus)}
+                  options={[
+                    { value: 'Todo', label: 'Todo' },
+                    { value: 'Doing', label: 'Doing' },
+                    { value: 'Done', label: 'Done' },
+                  ]}
+                  placeholder='Select status...'
+                />
               </div>
 
               {/* Assignee */}
@@ -193,7 +193,7 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
                   type='date'
                   value={taskDueDate}
                   onChange={(e) => setTaskDueDate(e.target.value)}
-                  className='w-full px-4 py-3 bg-white dark:bg-zim-cream-800 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-zim-cream-900 dark:text-zim-cream-50 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all'
+                  className='w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all'
                 />
               </div>
 
@@ -205,17 +205,16 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
                 >
                   Priority *
                 </label>
-                <select
-                  id='task-priority'
+                <SelectMenu
                   value={taskPriority}
-                  onChange={(e) => setTaskPriority(e.target.value as TaskPriority)}
-                  className='w-full px-4 py-3 bg-white dark:bg-zim-cream-800 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-zim-cream-900 dark:text-zim-cream-50 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all'
-                  required
-                >
-                  <option value='Low'>Low</option>
-                  <option value='Medium'>Medium</option>
-                  <option value='High'>High</option>
-                </select>
+                  onChange={(value) => setTaskPriority(value as TaskPriority)}
+                  options={[
+                    { value: 'Low', label: 'Low' },
+                    { value: 'Medium', label: 'Medium' },
+                    { value: 'High', label: 'High' },
+                  ]}
+                  placeholder='Select priority...'
+                />
               </div>
             </div>
 

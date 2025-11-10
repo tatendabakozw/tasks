@@ -1,6 +1,7 @@
 import React from 'react'
 import { Trash2, GripVertical } from 'lucide-react'
 import { TodoItem, TodoStatus } from '@/contexts/tasks-context'
+import SelectMenu from '@/components/menus/select-menu'
 
 interface TodoCardProps {
   todo: TodoItem
@@ -70,17 +71,21 @@ export default function TodoCard({ todo, onDelete, onStatusChange }: TodoCardPro
           {todo.status}
         </span>
         <div className='flex-1' />
-        <select
-          value={todo.status}
-          onChange={(e) => onStatusChange(e.target.value as TodoStatus)}
-          className='text-xs bg-transparent border border-zinc-200 dark:border-zinc-800 rounded px-2 py-1 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-zim-green-500'
-          onClick={(e) => e.stopPropagation()}
-        >
-          <option value='Pending'>Pending</option>
-          <option value='Todo'>Todo</option>
-          <option value='In Progress'>In Progress</option>
-          <option value='Complete'>Complete</option>
-        </select>
+        <div onClick={(e) => e.stopPropagation()}>
+          <SelectMenu
+            value={todo.status}
+            onChange={(value) => onStatusChange(value as TodoStatus)}
+            options={[
+              { value: 'Pending', label: 'Pending' },
+              { value: 'Todo', label: 'Todo' },
+              { value: 'In Progress', label: 'In Progress' },
+              { value: 'Complete', label: 'Complete' },
+            ]}
+            size='sm'
+            variant='compact'
+            className='min-w-[120px]'
+          />
+        </div>
       </div>
     </div>
   )
