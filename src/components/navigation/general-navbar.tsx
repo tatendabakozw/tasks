@@ -3,7 +3,7 @@ import { Settings } from 'lucide-react'
 
 function GeneralNavbar() {
   return (
-    <div className='sticky top-0 z-40 w-full border-b border-zinc-200/50 dark:border-zinc-800/50 bg-zim-cream-50 dark:bg-zim-cream-900/95 backdrop-blur-sm'>
+    <div className='sticky top-0 z-40 w-full border-b border-zinc-200/50 dark:border-zinc-800/50 bg-zim-white dark:bg-zim-cream-900/95 backdrop-blur-sm'>
       <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
         <div className='flex h-16 items-center justify-between'>
           {/* Logo/Name */}
