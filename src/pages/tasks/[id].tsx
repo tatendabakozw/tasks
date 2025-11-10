@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 import GeneralLayout from '@/layouts/general-layout'
 import { ArrowLeft, Trash2, Calendar, User, AlertCircle, CheckCircle2, Clock, Circle } from 'lucide-react'
@@ -8,12 +8,14 @@ import { format } from 'date-fns'
 import TodoCard from '@/components/todos/todo-card'
 import AddTodoForm from '@/components/todos/add-todo-form'
 import { calculateTaskProgress, getSuggestedTaskStatus } from '@/utils/task-progress'
+import ConfirmModal from '@/components/modals/confirm-modal'
 
 export default function TaskDetail() {
   const router = useRouter()
   const { id } = router.query
   const { getTask, updateTask, deleteTask, addTodo, deleteTodo, moveTodo } = useTasks()
   const [isLoading, setIsLoading] = React.useState(true)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // Get task early
   const task = id && router.isReady ? getTask(id as string) : undefined
@@ -92,10 +94,13 @@ export default function TaskDetail() {
   }
 
   const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this task?')) {
-      deleteTask(task.id)
-      router.push('/')
-    }
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDelete = () => {
+    deleteTask(task.id)
+    setShowDeleteConfirm(false)
+    router.push('/')
   }
 
   const formattedCreatedDate = format(new Date(task.createdAt), 'PPP')
@@ -409,6 +414,20 @@ export default function TaskDetail() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {task && (
+        <ConfirmModal
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={confirmDelete}
+          title='Delete Task'
+          message={`Are you sure you want to delete "${task.title}"? This action cannot be undone.`}
+          confirmText='Delete'
+          cancelText='Cancel'
+          variant='danger'
+        />
+      )}
     </GeneralLayout>
   )
 }

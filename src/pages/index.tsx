@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import GeneralLayout from '@/layouts/general-layout'
 import { Plus, Trash2, Circle, CheckCircle2, Clock, TrendingUp, User, Calendar, AlertCircle } from 'lucide-react'
 import AddTaskModal from '@/components/modals/add-task-modal'
+import ConfirmModal from '@/components/modals/confirm-modal'
 import PrimaryButton from '@/components/buttons/primary-button'
 import { useTasks, TaskStatus } from '@/contexts/tasks-context'
 import { format } from 'date-fns'
@@ -12,6 +13,7 @@ function index() {
   const router = useRouter()
   const { tasks, addTask, updateTask, deleteTask } = useTasks()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null)
 
   const handleTaskClick = (id: string) => {
     router.push(`/tasks/${id}`)
@@ -204,7 +206,7 @@ function index() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      deleteTask(task.id)
+                      setTaskToDelete(task.id)
                     }}
                     className='flex-shrink-0 p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 rounded transition-colors opacity-0 group-hover:opacity-100'
                     aria-label='Delete task'
@@ -297,6 +299,23 @@ function index() {
         onClose={() => setIsModalOpen(false)}
         onAdd={addTask}
       />
+
+      {/* Delete Confirmation Modal */}
+      {taskToDelete && (
+        <ConfirmModal
+          isOpen={!!taskToDelete}
+          onClose={() => setTaskToDelete(null)}
+          onConfirm={() => {
+            deleteTask(taskToDelete)
+            setTaskToDelete(null)
+          }}
+          title='Delete Task'
+          message={`Are you sure you want to delete "${tasks.find(t => t.id === taskToDelete)?.title}"? This action cannot be undone.`}
+          confirmText='Delete'
+          cancelText='Cancel'
+          variant='danger'
+        />
+      )}
     </GeneralLayout>
   )
 }
