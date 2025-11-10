@@ -1,42 +1,13 @@
-import type { Config } from "tailwindcss";
-
-const config: Config = {
-  darkMode: "class",
+// tailwind.config.js
+module.exports = {
+  darkMode: 'class',
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/layouts/**/*.{js,ts,jsx,tsx,mdx}",
+    './src/pages/**/*.{js,ts,jsx,tsx}',
+    './src/components/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
       colors: {
-        // Muddy brownish-gray palette (zinc-ish)
-        gray: {
-          50: '#faf9f7',   // Warm off-white
-          100: '#f5f3f0',  // Light clay
-          200: '#e8e6e1',  // Soft stone
-          300: '#d6d3ce',  // Muted beige-gray
-          400: '#a8a29e',  // Warm gray
-          500: '#78716c',  // Muddy brown-gray
-          600: '#57534e',  // Darker muddy tone
-          700: '#44403c',  // Deep brown-gray
-          800: '#292524',  // Dark muddy
-          900: '#1c1917',  // Very dark brown-gray
-          950: '#0c0a09',  // Almost black with brown tint
-        },
-        zinc: {
-          50: '#fafaf9',   // Warm off-white
-          100: '#f4f4f3',  // Light muddy
-          200: '#e7e5e4',  // Soft brownish-gray
-          300: '#d4d4d2',  // Muted clay-gray
-          400: '#a1a1aa',  // Warm zinc
-          500: '#71717a',  // Muddy zinc
-          600: '#52525b',  // Darker muddy zinc
-          700: '#3f3f46',  // Deep muddy zinc
-          800: '#27272a',  // Dark brownish-zinc
-          900: '#18181b',  // Very dark muddy zinc
-          950: '#09090b',  // Almost black with warm tint
-        },
         // Primary Color: Blue, for main elements and professional states
         'zim-green': {
           50: '#EFF6FF',
@@ -82,19 +53,19 @@ const config: Config = {
           950: '#2A0606',
         },
 
-        // Grayscale Palette: Muddy brownish-gray for backgrounds, text, and borders
+        // Grayscale Palette: Essential for backgrounds, text, and borders
         'zim-gray': {
-          50: '#faf9f7',   // Warm off-white
-          100: '#f5f3f0',  // Light clay
-          200: '#e8e6e1',  // Soft stone
-          300: '#d6d3ce',  // Muted beige-gray
-          400: '#a8a29e',  // Warm gray
-          500: '#78716c',  // Muddy brown-gray
-          600: '#57534e',  // Darker muddy tone
-          700: '#44403c',  // Deep brown-gray
-          800: '#292524',  // Dark muddy
-          900: '#1c1917',  // Very dark brown-gray
-          950: '#0c0a09',  // Almost black with brown tint
+          50: '#F5F5F5', // Superlight background
+          100: '#E5E5E5',
+          200: '#CCCCCC',
+          300: '#B3B3B3',
+          400: '#999999',
+          500: '#808080',
+          600: '#666666',
+          700: '#4D4D4D',
+          800: '#333333',
+          900: '#1A1A1A', // Dark text
+          950: '#000000', // Pure black
         },
         
         'zim-cream': {
@@ -131,5 +102,3 @@ const config: Config = {
   },
   plugins: [],
 };
-
-export default config;

@@ -1,21 +1,37 @@
 import React, { useEffect } from 'react'
 import { X } from 'lucide-react'
 import PrimaryButton from '@/components/buttons/primary-button'
+import { TaskStatus, TaskPriority } from '@/contexts/tasks-context'
 
 interface AddTaskModalProps {
   isOpen: boolean
   onClose: () => void
-  onAdd: (title: string, description: string) => void
+  onAdd: (task: {
+    title: string
+    description: string
+    status: TaskStatus
+    assignee: string
+    dueDate: string
+    priority: TaskPriority
+  }) => void
 }
 
 export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalProps) {
   const [taskTitle, setTaskTitle] = React.useState('')
   const [taskDescription, setTaskDescription] = React.useState('')
+  const [taskStatus, setTaskStatus] = React.useState<TaskStatus>('Todo')
+  const [taskAssignee, setTaskAssignee] = React.useState('')
+  const [taskDueDate, setTaskDueDate] = React.useState('')
+  const [taskPriority, setTaskPriority] = React.useState<TaskPriority>('Medium')
 
   useEffect(() => {
     if (isOpen) {
       setTaskTitle('')
       setTaskDescription('')
+      setTaskStatus('Todo')
+      setTaskAssignee('')
+      setTaskDueDate('')
+      setTaskPriority('Medium')
       // Focus input when modal opens
       const timer = setTimeout(() => {
         const input = document.getElementById('task-input')
@@ -38,9 +54,20 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (taskTitle.trim()) {
-      onAdd(taskTitle.trim(), taskDescription.trim())
+      onAdd({
+        title: taskTitle.trim(),
+        description: taskDescription.trim(),
+        status: taskStatus,
+        assignee: taskAssignee.trim(),
+        dueDate: taskDueDate || new Date().toISOString().split('T')[0],
+        priority: taskPriority,
+      })
       setTaskTitle('')
       setTaskDescription('')
+      setTaskStatus('Todo')
+      setTaskAssignee('')
+      setTaskDueDate('')
+      setTaskPriority('Medium')
       onClose()
     }
   }
@@ -112,6 +139,83 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
                   rows={4}
                   className='w-full px-4 py-3 bg-white dark:bg-zim-cream-800 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-zim-cream-900 dark:text-zim-cream-50 placeholder-zim-cream-400 dark:placeholder-zim-cream-500 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all resize-none'
                 />
+              </div>
+
+              {/* Status */}
+              <div>
+                <label
+                  htmlFor='task-status'
+                  className='block text-sm font-medium text-zim-cream-700 dark:text-zim-cream-300 mb-2 font-paragraph'
+                >
+                  Status *
+                </label>
+                <select
+                  id='task-status'
+                  value={taskStatus}
+                  onChange={(e) => setTaskStatus(e.target.value as TaskStatus)}
+                  className='w-full px-4 py-3 bg-white dark:bg-zim-cream-800 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-zim-cream-900 dark:text-zim-cream-50 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all'
+                  required
+                >
+                  <option value='Todo'>Todo</option>
+                  <option value='Doing'>Doing</option>
+                  <option value='Done'>Done</option>
+                </select>
+              </div>
+
+              {/* Assignee */}
+              <div>
+                <label
+                  htmlFor='task-assignee'
+                  className='block text-sm font-medium text-zim-cream-700 dark:text-zim-cream-300 mb-2 font-paragraph'
+                >
+                  Assignee
+                </label>
+                <input
+                  id='task-assignee'
+                  type='text'
+                  value={taskAssignee}
+                  onChange={(e) => setTaskAssignee(e.target.value)}
+                  placeholder='Who is responsible for this task?'
+                  className='w-full px-4 py-3 bg-white dark:bg-zim-cream-800 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-zim-cream-900 dark:text-zim-cream-50 placeholder-zim-cream-400 dark:placeholder-zim-cream-500 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all'
+                />
+              </div>
+
+              {/* Due Date */}
+              <div>
+                <label
+                  htmlFor='task-due-date'
+                  className='block text-sm font-medium text-zim-cream-700 dark:text-zim-cream-300 mb-2 font-paragraph'
+                >
+                  Due Date
+                </label>
+                <input
+                  id='task-due-date'
+                  type='date'
+                  value={taskDueDate}
+                  onChange={(e) => setTaskDueDate(e.target.value)}
+                  className='w-full px-4 py-3 bg-white dark:bg-zim-cream-800 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-zim-cream-900 dark:text-zim-cream-50 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all'
+                />
+              </div>
+
+              {/* Priority */}
+              <div>
+                <label
+                  htmlFor='task-priority'
+                  className='block text-sm font-medium text-zim-cream-700 dark:text-zim-cream-300 mb-2 font-paragraph'
+                >
+                  Priority *
+                </label>
+                <select
+                  id='task-priority'
+                  value={taskPriority}
+                  onChange={(e) => setTaskPriority(e.target.value as TaskPriority)}
+                  className='w-full px-4 py-3 bg-white dark:bg-zim-cream-800 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-zim-cream-900 dark:text-zim-cream-50 focus:outline-none focus:ring-2 focus:ring-zim-green-500/50 focus:border-zim-green-500/50 font-paragraph transition-all'
+                  required
+                >
+                  <option value='Low'>Low</option>
+                  <option value='Medium'>Medium</option>
+                  <option value='High'>High</option>
+                </select>
               </div>
             </div>
 

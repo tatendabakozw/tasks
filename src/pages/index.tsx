@@ -1,74 +1,85 @@
 import React, { useState } from 'react'
+import { useRouter } from 'next/router'
 import GeneralLayout from '@/layouts/general-layout'
-import { Plus, Check, Trash2, Circle, CheckCircle2, Clock, TrendingUp } from 'lucide-react'
+import { Plus, Trash2, Circle, CheckCircle2, Clock, TrendingUp, User, Calendar, AlertCircle } from 'lucide-react'
 import AddTaskModal from '@/components/modals/add-task-modal'
 import PrimaryButton from '@/components/buttons/primary-button'
-
-interface Task {
-  id: string
-  title: string
-  description: string
-  completed: boolean
-  createdAt: Date
-}
+import { useTasks, TaskStatus } from '@/contexts/tasks-context'
+import { format } from 'date-fns'
 
 function index() {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      title: 'Complete project documentation',
-      description: 'Write comprehensive documentation for all project features and APIs',
-      completed: false,
-      createdAt: new Date(),
-    },
-    {
-      id: '2',
-      title: 'Review code changes',
-      description: 'Review pull requests and provide feedback to the team',
-      completed: true,
-      createdAt: new Date(),
-    },
-  ])
+  const router = useRouter()
+  const { tasks, addTask, updateTask, deleteTask } = useTasks()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const addTask = (title: string, description: string) => {
-    const newTask: Task = {
-      id: Date.now().toString(),
-      title,
-      description,
-      completed: false,
-      createdAt: new Date(),
-    }
-    setTasks([newTask, ...tasks])
+  const handleTaskClick = (id: string) => {
+    router.push(`/tasks/${id}`)
   }
 
-  const toggleTask = (id: string) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ))
-  }
-
-  const deleteTask = (id: string) => {
-    setTasks(tasks.filter(task => task.id !== id))
-  }
-
-  const completedCount = tasks.filter(t => t.completed).length
-  const inProgressCount = tasks.filter(t => !t.completed).length
+  const getStatusCount = (status: TaskStatus) => tasks.filter(t => t.status === status).length
+  
+  const todoCount = getStatusCount('Todo')
+  const doingCount = getStatusCount('Doing')
+  const doneCount = getStatusCount('Done')
   const totalCount = tasks.length
-  const completionPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+  const completionPercentage = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0
+
+  const getStatusColor = (status: TaskStatus) => {
+    switch (status) {
+      case 'Todo':
+        return 'bg-zim-cream-100 dark:bg-zim-cream-800 text-zim-cream-700 dark:text-zim-cream-300'
+      case 'Doing':
+        return 'bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-400'
+      case 'Done':
+        return 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400'
+    }
+  }
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'High':
+        return 'bg-zim-red-100 dark:bg-zim-red-900/30 text-zim-red-700 dark:text-zim-red-400'
+      case 'Medium':
+        return 'bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-400'
+      case 'Low':
+        return 'bg-zim-green-100 dark:bg-zim-green-900/30 text-zim-green-700 dark:text-zim-green-400'
+      default:
+        return 'bg-zim-cream-100 dark:bg-zim-cream-800 text-zim-cream-700 dark:text-zim-cream-300'
+    }
+  }
+
+  const formatDueDate = (dateString: string) => {
+    if (!dateString) return 'No due date'
+    try {
+      const date = new Date(dateString)
+      return format(date, 'MMM d, yyyy')
+    } catch {
+      return 'Invalid date'
+    }
+  }
+
+  const isOverdue = (dateString: string) => {
+    if (!dateString) return false
+    try {
+      const date = new Date(dateString)
+      return date < new Date() && date.toDateString() !== new Date().toDateString()
+    } catch {
+      return false
+    }
+  }
 
   return (
     <GeneralLayout>
-      <div className='max-w-2xl mx-auto w-full'>
+      <div className='max-w-7xl mx-auto w-full'>
         {/* Header Section */}
         <div className='mb-8'>
           <div className='flex items-center justify-between mb-6'>
             <div>
               <h1 className='text-3xl font-bold text-zim-cream-900 dark:text-zim-cream-50 mb-2 font-heading'>
                 My Tasks
-              </h1>
+          </h1>
               <p className='text-sm text-zim-cream-600 dark:text-zim-cream-400 font-paragraph'>
-                {completedCount} of {totalCount} completed
+                {doneCount} of {totalCount} completed
               </p>
             </div>
             <PrimaryButton onClick={() => setIsModalOpen(true)} icon={Plus}>
@@ -78,7 +89,7 @@ function index() {
 
           {/* Summary Analytics */}
           {totalCount > 0 && (
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mb-6'>
+            <div className='grid grid-cols-2 md:grid-cols-5 gap-4 mb-6'>
               {/* Total Tasks */}
               <div className='p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50'>
                 <div className='flex items-center gap-3 mb-2'>
@@ -94,33 +105,48 @@ function index() {
                 </p>
               </div>
 
-              {/* Completed Tasks */}
+              {/* Todo Tasks */}
               <div className='p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50'>
                 <div className='flex items-center gap-3 mb-2'>
-                  <div className='p-2 bg-success-100 dark:bg-success-900/30 rounded-lg'>
-                    <CheckCircle2 className='h-4 w-4 text-success-600 dark:text-success-400' />
+                  <div className='p-2 bg-zim-cream-100 dark:bg-zim-cream-800 rounded-lg'>
+                    <Circle className='h-4 w-4 text-zim-cream-600 dark:text-zim-cream-400' />
                   </div>
                   <span className='text-xs font-medium text-zim-cream-600 dark:text-zim-cream-400 font-badge uppercase tracking-wide'>
-                    Finished
+                    Todo
                   </span>
                 </div>
-                <p className='text-2xl font-bold text-success-600 dark:text-success-400 font-heading'>
-                  {completedCount}
+                <p className='text-2xl font-bold text-zim-cream-900 dark:text-zim-cream-50 font-heading'>
+                  {todoCount}
                 </p>
               </div>
 
-              {/* In Progress Tasks */}
+              {/* Doing Tasks */}
               <div className='p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50'>
                 <div className='flex items-center gap-3 mb-2'>
                   <div className='p-2 bg-warning-100 dark:bg-warning-900/30 rounded-lg'>
                     <Clock className='h-4 w-4 text-warning-600 dark:text-warning-400' />
                   </div>
                   <span className='text-xs font-medium text-zim-cream-600 dark:text-zim-cream-400 font-badge uppercase tracking-wide'>
-                    In Progress
+                    Doing
                   </span>
                 </div>
                 <p className='text-2xl font-bold text-warning-600 dark:text-warning-400 font-heading'>
-                  {inProgressCount}
+                  {doingCount}
+                </p>
+              </div>
+
+              {/* Done Tasks */}
+              <div className='p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50'>
+                <div className='flex items-center gap-3 mb-2'>
+                  <div className='p-2 bg-success-100 dark:bg-success-900/30 rounded-lg'>
+                    <CheckCircle2 className='h-4 w-4 text-success-600 dark:text-success-400' />
+                  </div>
+                  <span className='text-xs font-medium text-zim-cream-600 dark:text-zim-cream-400 font-badge uppercase tracking-wide'>
+                    Done
+                  </span>
+                </div>
+                <p className='text-2xl font-bold text-success-600 dark:text-success-400 font-heading'>
+                  {doneCount}
                 </p>
               </div>
 
@@ -142,10 +168,10 @@ function index() {
           )}
         </div>
 
-        {/* Tasks List */}
-        <div className='space-y-2'>
+        {/* Tasks Grid */}
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
           {tasks.length === 0 ? (
-            <div className='text-center py-12 px-4'>
+            <div className='col-span-full text-center py-12 px-4'>
               <div className='inline-flex items-center justify-center w-16 h-16 rounded-full bg-zim-cream-100 dark:bg-zim-cream-800 mb-4'>
                 <Circle className='h-8 w-8 text-zim-cream-400 dark:text-zim-cream-500' />
               </div>
@@ -160,54 +186,81 @@ function index() {
             tasks.map((task) => (
               <div
                 key={task.id}
-                className='group flex items-start gap-3 p-4 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50 hover:border-zim-green-300/50 dark:hover:border-zim-green-700/50 transition-all'
+                className='group flex flex-col p-5 bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50 hover:border-zim-green-300/50 dark:hover:border-zim-green-700/50 transition-all cursor-pointer'
+                onClick={() => handleTaskClick(task.id)}
               >
-                {/* Checkbox */}
-                <button
-                  onClick={() => toggleTask(task.id)}
-                  className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                    task.completed
-                      ? 'bg-zim-green-500 border-zim-green-500'
-                      : 'border-zim-cream-300 dark:border-zim-cream-600 hover:border-zim-green-400'
-                  }`}
-                >
-                  {task.completed && (
-                    <Check className='h-3 w-3 text-white' strokeWidth={3} />
-                  )}
-                </button>
-
-                {/* Task Content */}
-                <div className='flex-1 min-w-0'>
-                  <p
-                    className={`font-paragraph font-medium mb-1 ${
-                      task.completed
+                {/* Header */}
+                <div className='flex items-start justify-between mb-3'>
+                  <h3
+                    className={`font-paragraph font-semibold text-base flex-1 ${
+                      task.status === 'Done'
                         ? 'text-zim-cream-500 dark:text-zim-cream-500 line-through'
                         : 'text-zim-cream-900 dark:text-zim-cream-50'
                     }`}
                   >
                     {task.title}
-                  </p>
-                  {task.description && (
-                    <p
-                      className={`text-sm font-paragraph ${
-                        task.completed
-                          ? 'text-zim-cream-400 dark:text-zim-cream-600 line-through'
-                          : 'text-zim-cream-600 dark:text-zim-cream-400'
-                      }`}
-                    >
-                      {task.description}
-                    </p>
-                  )}
+                  </h3>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      deleteTask(task.id)
+                    }}
+                    className='flex-shrink-0 p-1.5 text-zim-cream-400 dark:text-zim-cream-500 hover:text-zim-red-500 dark:hover:text-zim-red-400 rounded transition-colors opacity-0 group-hover:opacity-100'
+                    aria-label='Delete task'
+                  >
+                    <Trash2 className='h-4 w-4' />
+                  </button>
                 </div>
 
-                {/* Delete Button */}
-                <button
-                  onClick={() => deleteTask(task.id)}
-                  className='flex-shrink-0 p-1.5 text-zim-cream-400 dark:text-zim-cream-500 hover:text-zim-red-500 dark:hover:text-zim-red-400 rounded transition-colors opacity-0 group-hover:opacity-100'
-                  aria-label='Delete task'
-                >
-                  <Trash2 className='h-4 w-4' />
-                </button>
+                {/* Description */}
+                {task.description && (
+                  <p
+                    className={`text-sm font-paragraph mb-4 line-clamp-2 ${
+                      task.status === 'Done'
+                        ? 'text-zim-cream-400 dark:text-zim-cream-600 line-through'
+                        : 'text-zim-cream-600 dark:text-zim-cream-400'
+                    }`}
+                  >
+                    {task.description}
+                  </p>
+                )}
+
+                {/* Status and Priority */}
+                <div className='flex items-center gap-2 mb-3 flex-wrap'>
+                  <span
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium font-badge ${getStatusColor(task.status)}`}
+                  >
+                    {task.status}
+                  </span>
+                  <span
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium font-badge ${getPriorityColor(task.priority)}`}
+                  >
+                    {task.priority}
+                  </span>
+                </div>
+
+                {/* Metadata */}
+                <div className='mt-auto space-y-2 pt-3 border-t border-zinc-200/50 dark:border-zinc-800/50'>
+                  {task.assignee && (
+                    <div className='flex items-center gap-2 text-xs text-zim-cream-600 dark:text-zim-cream-400 font-paragraph'>
+                      <User className='h-3.5 w-3.5' />
+                      <span className='truncate'>{task.assignee}</span>
+                    </div>
+                  )}
+                  {task.dueDate && (
+                    <div className={`flex items-center gap-2 text-xs font-paragraph ${
+                      isOverdue(task.dueDate) && task.status !== 'Done'
+                        ? 'text-zim-red-600 dark:text-zim-red-400'
+                        : 'text-zim-cream-600 dark:text-zim-cream-400'
+                    }`}>
+                      <Calendar className='h-3.5 w-3.5' />
+                      <span>{formatDueDate(task.dueDate)}</span>
+                      {isOverdue(task.dueDate) && task.status !== 'Done' && (
+                        <AlertCircle className='h-3.5 w-3.5' />
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             ))
           )}

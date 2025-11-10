@@ -1,0 +1,252 @@
+import React from 'react'
+import { useRouter } from 'next/router'
+import GeneralLayout from '@/layouts/general-layout'
+import { ArrowLeft, Trash2, Calendar, User, AlertCircle, CheckCircle2, Clock, Circle } from 'lucide-react'
+import { useTasks, TaskStatus } from '@/contexts/tasks-context'
+import PrimaryButton from '@/components/buttons/primary-button'
+import { format } from 'date-fns'
+
+export default function TaskDetail() {
+  const router = useRouter()
+  const { id } = router.query
+  const { getTask, updateTask, deleteTask } = useTasks()
+  const [isLoading, setIsLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    if (router.isReady) {
+      setIsLoading(false)
+    }
+  }, [router.isReady])
+
+  const task = id && router.isReady ? getTask(id as string) : undefined
+
+  if (isLoading || !router.isReady) {
+    return (
+      <GeneralLayout>
+        <div className='max-w-2xl mx-auto w-full'>
+          <div className='text-center py-12'>
+            <p className='text-zim-cream-600 dark:text-zim-cream-400 font-paragraph'>
+              Loading...
+            </p>
+          </div>
+        </div>
+      </GeneralLayout>
+    )
+  }
+
+  if (!task) {
+    return (
+      <GeneralLayout>
+        <div className='max-w-2xl mx-auto w-full'>
+          <div className='text-center py-12'>
+            <h2 className='text-2xl font-bold text-zim-cream-900 dark:text-zim-cream-50 mb-2 font-heading'>
+              Task not found
+            </h2>
+            <p className='text-zim-cream-600 dark:text-zim-cream-400 font-paragraph mb-6'>
+              The task you're looking for doesn't exist.
+            </p>
+            <PrimaryButton onClick={() => router.push('/')} icon={ArrowLeft} iconPosition='left'>
+              Back to Tasks
+            </PrimaryButton>
+          </div>
+        </div>
+      </GeneralLayout>
+    )
+  }
+
+  const handleStatusChange = (newStatus: TaskStatus) => {
+    updateTask(task.id, { status: newStatus })
+  }
+
+  const handleDelete = () => {
+    if (confirm('Are you sure you want to delete this task?')) {
+      deleteTask(task.id)
+      router.push('/')
+    }
+  }
+
+  const formattedCreatedDate = format(new Date(task.createdAt), 'PPP')
+  const formattedDueDate = task.dueDate ? format(new Date(task.dueDate), 'PPP') : null
+  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'Done'
+
+  const getStatusColor = (status: TaskStatus) => {
+    switch (status) {
+      case 'Todo':
+        return 'bg-zim-cream-100 dark:bg-zim-cream-800 text-zim-cream-700 dark:text-zim-cream-300'
+      case 'Doing':
+        return 'bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-400'
+      case 'Done':
+        return 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400'
+    }
+  }
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'High':
+        return 'bg-zim-red-100 dark:bg-zim-red-900/30 text-zim-red-700 dark:text-zim-red-400'
+      case 'Medium':
+        return 'bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-400'
+      case 'Low':
+        return 'bg-zim-green-100 dark:bg-zim-green-900/30 text-zim-green-700 dark:text-zim-green-400'
+      default:
+        return 'bg-zim-cream-100 dark:bg-zim-cream-800 text-zim-cream-700 dark:text-zim-cream-300'
+    }
+  }
+
+  return (
+    <GeneralLayout>
+      <div className='max-w-3xl mx-auto w-full'>
+        {/* Back Button */}
+        <button
+          onClick={() => router.push('/')}
+          className='flex items-center gap-2 mb-6 text-zim-cream-600 dark:text-zim-cream-400 hover:text-zim-cream-900 dark:hover:text-zim-cream-50 transition-colors font-paragraph'
+        >
+          <ArrowLeft className='h-4 w-4' />
+          Back to Tasks
+        </button>
+
+        {/* Task Card */}
+        <div className='bg-white dark:bg-zim-cream-900 rounded-lg border border-zinc-200/50 dark:border-zinc-800/50 p-6 md:p-8'>
+          {/* Header */}
+          <div className='flex items-start justify-between mb-6'>
+            <div className='flex-1 min-w-0'>
+              <h1
+                className={`text-3xl font-bold mb-4 font-heading ${
+                  task.status === 'Done'
+                    ? 'text-zim-cream-500 dark:text-zim-cream-500 line-through'
+                    : 'text-zim-cream-900 dark:text-zim-cream-50'
+                }`}
+              >
+                {task.title}
+              </h1>
+              <div className='flex items-center gap-4 flex-wrap'>
+                <div className='flex items-center gap-2 text-sm text-zim-cream-600 dark:text-zim-cream-400 font-paragraph'>
+                  <Calendar className='h-4 w-4' />
+                  <span>Created {formattedCreatedDate}</span>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={handleDelete}
+              className='flex-shrink-0 p-2 text-zim-cream-400 dark:text-zim-cream-500 hover:text-zim-red-500 dark:hover:text-zim-red-400 rounded-lg transition-colors hover:bg-zim-cream-100 dark:hover:bg-zim-cream-800'
+              aria-label='Delete task'
+            >
+              <Trash2 className='h-5 w-5' />
+            </button>
+          </div>
+
+          {/* Status and Priority Badges */}
+          <div className='flex items-center gap-3 mb-6 flex-wrap'>
+            <span
+              className={`px-3 py-1.5 rounded-full text-xs font-medium font-badge ${getStatusColor(task.status)}`}
+            >
+              {task.status}
+            </span>
+            <span
+              className={`px-3 py-1.5 rounded-full text-xs font-medium font-badge ${getPriorityColor(task.priority)}`}
+            >
+              {task.priority} Priority
+            </span>
+          </div>
+
+          {/* Description */}
+          {task.description && (
+            <div className='mb-6'>
+              <h2 className='text-sm font-semibold text-zim-cream-700 dark:text-zim-cream-300 mb-2 font-subheading uppercase tracking-wide'>
+                Description
+              </h2>
+              <p
+                className={`text-base font-paragraph leading-relaxed ${
+                  task.status === 'Done'
+                    ? 'text-zim-cream-400 dark:text-zim-cream-600 line-through'
+                    : 'text-zim-cream-700 dark:text-zim-cream-300'
+                }`}
+              >
+                {task.description}
+              </p>
+            </div>
+          )}
+
+          {/* Task Details */}
+          <div className='space-y-4 pt-6 border-t border-zinc-200/50 dark:border-zinc-800/50'>
+            {task.assignee && (
+              <div className='flex items-center gap-3'>
+                <User className='h-5 w-5 text-zim-cream-600 dark:text-zim-cream-400' />
+                <div>
+                  <p className='text-xs font-medium text-zim-cream-600 dark:text-zim-cream-400 font-badge uppercase tracking-wide mb-1'>
+                    Assignee
+                  </p>
+                  <p className='text-base font-paragraph text-zim-cream-900 dark:text-zim-cream-50'>
+                    {task.assignee}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {formattedDueDate && (
+              <div className='flex items-center gap-3'>
+                <Calendar className={`h-5 w-5 ${isOverdue ? 'text-zim-red-500 dark:text-zim-red-400' : 'text-zim-cream-600 dark:text-zim-cream-400'}`} />
+                <div>
+                  <p className='text-xs font-medium text-zim-cream-600 dark:text-zim-cream-400 font-badge uppercase tracking-wide mb-1'>
+                    Due Date
+                  </p>
+                  <div className='flex items-center gap-2'>
+                    <p className={`text-base font-paragraph ${isOverdue ? 'text-zim-red-600 dark:text-zim-red-400' : 'text-zim-cream-900 dark:text-zim-cream-50'}`}>
+                      {formattedDueDate}
+                    </p>
+                    {isOverdue && (
+                      <AlertCircle className='h-4 w-4 text-zim-red-500 dark:text-zim-red-400' />
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Status Change Actions */}
+          <div className='mt-6 pt-6 border-t border-zinc-200/50 dark:border-zinc-800/50'>
+            <p className='text-sm font-medium text-zim-cream-700 dark:text-zim-cream-300 mb-3 font-subheading'>
+              Change Status
+            </p>
+            <div className='flex items-center gap-2 flex-wrap'>
+              <button
+                onClick={() => handleStatusChange('Todo')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium font-buttons transition-colors ${
+                  task.status === 'Todo'
+                    ? 'bg-zim-cream-200 dark:bg-zim-cream-700 text-zim-cream-900 dark:text-zim-cream-50'
+                    : 'bg-zim-cream-100 dark:bg-zim-cream-800 text-zim-cream-700 dark:text-zim-cream-300 hover:bg-zim-cream-200 dark:hover:bg-zim-cream-700'
+                }`}
+              >
+                <Circle className='h-4 w-4 inline mr-2' />
+                Todo
+              </button>
+              <button
+                onClick={() => handleStatusChange('Doing')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium font-buttons transition-colors ${
+                  task.status === 'Doing'
+                    ? 'bg-warning-200 dark:bg-warning-700 text-warning-900 dark:text-warning-50'
+                    : 'bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-400 hover:bg-warning-200 dark:hover:bg-warning-700'
+                }`}
+              >
+                <Clock className='h-4 w-4 inline mr-2' />
+                Doing
+              </button>
+              <button
+                onClick={() => handleStatusChange('Done')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium font-buttons transition-colors ${
+                  task.status === 'Done'
+                    ? 'bg-success-200 dark:bg-success-700 text-success-900 dark:text-success-50'
+                    : 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400 hover:bg-success-200 dark:hover:bg-success-700'
+                }`}
+              >
+                <CheckCircle2 className='h-4 w-4 inline mr-2' />
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </GeneralLayout>
+  )
+}
+
