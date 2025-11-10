@@ -235,7 +235,7 @@ A fully accessible modal for creating new tasks with:
 ## 📁 Project Structure
 
 ```
-interview-todo/
+tasks/
 ├── src/
 │   ├── components/          # Reusable UI components
 │   │   ├── buttons/        # Button components
