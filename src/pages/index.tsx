@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useRouter } from 'next/router'
+import Head from 'next/head'
 import GeneralLayout from '@/layouts/general-layout'
 import { Plus, Trash2, Circle, CheckCircle2, Clock, TrendingUp, User, Calendar, AlertCircle, Search, X } from 'lucide-react'
 import AddTaskModal from '@/components/modals/add-task-modal'
@@ -151,8 +152,28 @@ function index() {
   }
 
   return (
-    <GeneralLayout>
-      <div className='max-w-7xl mx-auto w-full'>
+    <>
+      <Head>
+        <title>My Tasks - Task Management App</title>
+        <meta
+          name="description"
+          content="Manage your tasks efficiently with our modern task management application. Create, organize, and track tasks with subtodos, priorities, and due dates. Get insights with analytics dashboard."
+        />
+        <meta property="og:title" content="My Tasks - Task Management App" />
+        <meta
+          property="og:description"
+          content="Manage your tasks efficiently with our modern task management application. Create, organize, and track tasks with subtodos, priorities, and due dates."
+        />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="My Tasks - Task Management App" />
+        <meta
+          name="twitter:description"
+          content="Manage your tasks efficiently with our modern task management application."
+        />
+      </Head>
+      <GeneralLayout>
+        <div className='max-w-7xl mx-auto w-full'>
         {/* Header Section */}
         <div className='mb-8'>
           <div className='flex items-center justify-between mb-6'>
@@ -517,7 +538,8 @@ function index() {
           variant='danger'
         />
       )}
-    </GeneralLayout>
+      </GeneralLayout>
+    </>
   )
 }
 

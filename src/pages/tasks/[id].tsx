@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
+import Head from 'next/head'
 import GeneralLayout from '@/layouts/general-layout'
 import { ArrowLeft, Trash2, Calendar, User, AlertCircle, CheckCircle2, Clock, Circle, Edit2, Save, X } from 'lucide-react'
 import { useTasks, TaskStatus, TodoStatus, TaskPriority } from '@/contexts/tasks-context'
@@ -274,9 +275,25 @@ export default function TaskDetail() {
     }
   }
 
+  const pageTitle = task ? `${task.title} - Task Details` : 'Task Details'
+  const pageDescription = task
+    ? `View and manage "${task.title}". ${task.description ? task.description.substring(0, 120) : 'Track progress, manage subtodos, and update task details.'}`
+    : 'View and manage your task details, track progress, and organize subtodos with our Kanban board.'
+
   return (
-    <GeneralLayout>
-      <div className='max-w-7xl mx-auto w-full'>
+    <>
+      <Head>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+      </Head>
+      <GeneralLayout>
+        <div className='max-w-7xl mx-auto w-full'>
         {/* Back Button */}
         <button
           onClick={() => router.push('/')}
@@ -729,6 +746,7 @@ export default function TaskDetail() {
             />
           )}
         </GeneralLayout>
-      )
-    }
+      </>
+    )
+  }
 

@@ -33,7 +33,7 @@ A modern, full-featured task management application built with Next.js, featurin
 
 ```bash
 git clone <repository-url>
-cd interview-todo
+cd tasks
 ```
 
 2. **Install dependencies**
